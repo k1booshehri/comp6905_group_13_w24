@@ -1,0 +1,7 @@
+.leaflet-marker-icon,
+.leaflet-div-icon,
+.leaflet-zoom-animated,
+.leaflet-interactive {
+  background-color: transparent;
+  border: none;
+}
