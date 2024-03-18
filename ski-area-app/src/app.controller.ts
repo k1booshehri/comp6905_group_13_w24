@@ -63,6 +63,15 @@ export class AppController {
   }
   */
 
+  @Get('all-routes')
+  getAllRoutes(): string {
+    const routes = this.appService.getAllRoutes();
+    return JSON.stringify({
+      message: 'All Available Routes',
+      routes: routes,
+    });
+  }
+
   @Get()
   getDefaultRoute(
     @Query('start') start: string = 'A',
