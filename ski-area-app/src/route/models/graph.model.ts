@@ -3,6 +3,7 @@ import { Edge, Level } from './edge.model';
 export class Graph {
   public nodes: Set<string> = new Set();
   public adjList: Map<string, Edge[]> = new Map();
+  
 
   public addNode(node: string): void {
     this.nodes.add(node);
@@ -46,61 +47,56 @@ export class Graph {
     return allEdges;
   }
 
-  // Method for finding routes
-  /*
-  //Gives Error
-  public findRoutes(start: string, end: string, level?: Level): Edge[] {
-    const routes: Edge[] = [];
-    const startEdges = this.adjList.get(start) || [];
-    for (const edge of startEdges) {
-      if (edge.end === end && (level === undefined || edge.level === level)) {
-        routes.push(edge);
-      }
-    }
-    return routes;
-  }*/
 
-  /*
-  //Gives empty JSON
-  public findRoutes(start: string, end: string, level?: Level): Edge[] {
-    // Initialize routes array to hold matching edges
-    const routes: Edge[] = [];
-    // Retrieve all edges starting from the 'start' node
-    const startEdges = this.adjList.get(start) || [];
-    
-    // First, try to find slopes that match the specified level
-    for (const edge of startEdges) {
-      if (edge.end === end && edge.level === level) {
-        routes.push(edge);
-      }
-    }
-
-    // If no slopes were found and a level was specified, try to find a lift
-    if (routes.length === 0 && level) {
-      for (const edge of startEdges) {
-        if (edge.end === end && edge.isLift) {
-          routes.push(edge);
+  public getAllEdgesWithOverview(): { nodes: string[], levels: Level[], edges: Edge[] } {
+    const levelsSet: Set<Level> = new Set();
+  
+    // Iterate over the adjacency list to fill levelsSet with unique levels (excluding null values) and allEdges with edges
+    this.adjList.forEach(edges => {
+      edges.forEach(edge => {
+        // Check if edge.level is not null before adding it to the set
+        if (edge.level !== null && edge.level !== undefined) {
+          levelsSet.add(edge.level);
         }
-      }
-    }
-
-    // If no level was specified, add all edges including lifts
-    if (level === undefined) {
-      for (const edge of startEdges) {
-        if (edge.end === end) {
-          routes.push(edge);
-        }
-      }
-    }
-
-    return routes;
+      });
+    });
+  
+    const nodesArray = Array.from(this.nodes);
+    const levelsArray = Array.from(levelsSet);
+    const allEdges = this.getAllEdges();
+  
+    return { nodes: nodesArray, levels: levelsArray, edges: allEdges };
   }
-  */
+  
+
+
+  public getGraphOverview(): { nodes: string[], levels: Level[], edges: Edge[] } {
+    // Initialize a Set to store all unique levels
+    const levelsSet: Set<Level> = new Set();
+  
+    // Iterate over all edges to extract unique levels
+    this.adjList.forEach(edges => {
+      edges.forEach(edge => {
+        levelsSet.add(edge.level);
+      });
+    });
+  
+    // Convert the nodes Set and levels Set to arrays for JSON compatibility
+    const nodesArray = Array.from(this.nodes);
+    const levelsArray = Array.from(levelsSet);
+  
+    // Also, let's get all the edges for completeness
+    const allEdges = this.getAllEdges();
+  
+    // Return an object containing nodes, levels, and all edges
+    return { nodes: nodesArray, levels: levelsArray, edges: allEdges };
+  }
 
   public findRouteWithFallback(start: string, end: string, level?: Level): { path: Edge[], totalTime: number, totalDistance: number } {
     // Objects to store visited nodes and the path to reach them
     const visited = new Set<string>();
     const prev = new Map<string, Edge>();
+    
 
     // Queue for BFS, stores the node and the level of slopes used to reach it
     const queue: { node: string, levelUsed: boolean }[] = [{ node: start, levelUsed: false }];

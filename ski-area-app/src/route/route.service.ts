@@ -40,11 +40,11 @@ export class RouteService {
     return this.graph.getAllEdges(); // Assuming Graph class has getAllEdges method
   }
 
-  /*
-  public getRoutes(start: string, end: string, level?: Level): Edge[] {
-    return this.graph.findRoutes(start, end, level);
+
+  public getAllRoutesOverview(): { nodes: string[], levels: Level[], edges: Edge[] } {
+    // This calls the new method from the Graph class
+    return this.graph.getAllEdgesWithOverview();
   }
-  */
 
   public findRoutesWithFallback(start: string, end: string, level?: Level): { path: Edge[], totalTime: number, totalDistance: number } {
     return this.graph.findRouteWithFallback(start, end, level);

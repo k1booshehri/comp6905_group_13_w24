@@ -13,10 +13,10 @@ export class AppService {
     return this.routeService.getAllRoutes();
   }
 
-  /*
-  public getRoutes(start: string, end: string, level?: Level): Edge[] {
-    return this.routeService.getRoutes(start, end, level);
-  }*/
+  public getAllRoutesOverview(): { nodes: string[], levels: Level[], edges: Edge[] } {
+    // Call the new method in RouteService
+    return this.routeService.getAllRoutesOverview();
+  }
 
   public findRoutesWithFallback(start: string, end: string, level?: Level): { path: Edge[], totalTime: number, totalDistance: number } {
     return this.routeService.findRoutesWithFallback(start, end, level);
