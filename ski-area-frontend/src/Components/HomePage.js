@@ -12,7 +12,7 @@ const HomePage = () => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      navigate('/all-routes', { state: { routes: data.routesc, nodes: data.nodes, levels: data.levels } });
+      navigate('/all-routes', { state: { routes: data.routes, nodes: data.nodes, levels: data.levels } });
     } catch (error) {
       console.error('There was a problem with the fetch operation:', error);
     }

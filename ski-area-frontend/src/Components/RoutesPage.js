@@ -19,13 +19,17 @@ const RoutesPage = () => {
 
   useEffect(() => {
     const { routes, nodes, levels } = location.state || {};
-    if (routes && nodes && levels) {
+    if (nodes && levels) {
       setStartPoints(nodes);
+      setEndPoints(nodes);
       setLevels(levels);
-      processRoutes(routes);
     }
-  }, [location]);
+    if (routes) {
+      processRoutes(routes); // Ensure this is the only place where graph data is set.
+    }
+  }, [location.state]);
 
+  /*
   const processRoutes = (routesData) => {
     const nodes = new Set();
     const linksMap = new Map();
@@ -67,22 +71,58 @@ const RoutesPage = () => {
       nodes: Array.from(nodes).map(id => ({ id })),
       links,
     });
+    
+  };*/
+
+  const processRoutes = (routesData) => {
+    const nodes = new Set();
+    const linksMap = new Map();
+    const levelSet = new Set();
+
+    routesData.forEach((route) => {
+      const key = `${route.start}-${route.end}`;
+      nodes.add(route.start);
+      nodes.add(route.end);
+      if (route.level) levelSet.add(route.level);
+
+      const existingEntry = linksMap.get(key);
+      const levelLabel = route.level || '';
+      const liftLabel = route.isLift ? 'L' : '';
+
+      if (existingEntry) {
+        if (levelLabel && !existingEntry.labels.includes(levelLabel)) {
+          existingEntry.labels.push(levelLabel);
+        }
+        if (liftLabel && !existingEntry.labels.includes(liftLabel)) {
+          existingEntry.labels.push(liftLabel);
+        }
+      } else {
+        linksMap.set(key, { source: route.start, target: route.end, labels: [levelLabel, liftLabel].filter(Boolean) });
+      }
+    });
+
+    const links = Array.from(linksMap.values()).map(link => ({
+      ...link,
+      label: link.labels.join(', ')
+    }));
+
+    setGraphData({
+      nodes: Array.from(nodes).map(id => ({ id })),
+      links,
+    });
   };
+
 
   const handleCalculateRoutes = async () => {
     if (selectedStart && selectedEnd && selectedLevel) {
-      const queryParams = new URLSearchParams({
-        start: selectedStart,
-        end: selectedEnd,
-        level: selectedLevel
-      });
-
+      // Implementation remains the same
       try {
         const response = await fetch(`http://localhost:3028/`);
         if (!response.ok) throw new Error('Network response was not ok');
         const result = await response.json();
 
         processRoutes(result.path);
+
         setRouteSummary({
           path: result.path.map(route => `${route.start}-${route.end}`).join(', '),
           totalTime: result.totalTime,
@@ -96,11 +136,12 @@ const RoutesPage = () => {
     }
   };
 
+
   return (
     <div>
       <h2>All Available Routes</h2>
       <div style={{ marginBottom: '5px' }}>
-      <label>
+        <label>
           Start Point:
           <select value={selectedStart} onChange={(e) => setSelectedStart(e.target.value)}>
             <option value="">Select Start</option>
@@ -154,25 +195,17 @@ const RoutesPage = () => {
           ctx.fillText(label, node.x, node.y);
         }}
         linkCanvasObject={(link, ctx, globalScale) => {
-          // Draw the line
           ctx.beginPath();
           ctx.moveTo(link.source.x, link.source.y);
           ctx.lineTo(link.target.x, link.target.y);
           ctx.strokeStyle = 'rgba(0,0,0,0.5)';
           ctx.stroke();
 
-          // Draw the label if it exists
           if (link.label) {
             const fontSize = 12 / globalScale;
             ctx.font = `${fontSize}px Sans-Serif`;
             const textX = (link.source.x + link.target.x) / 2;
             const textY = (link.source.y + link.target.y) / 2;
-            const textWidth = ctx.measureText(link.label).width;
-            const textHeight = fontSize * 1.2;
-
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-            ctx.fillRect(textX - textWidth / 2 - 4, textY - textHeight / 2 - 4, textWidth + 8, textHeight + 8);
-
             ctx.fillStyle = 'black';
             ctx.fillText(link.label, textX, textY);
           }
