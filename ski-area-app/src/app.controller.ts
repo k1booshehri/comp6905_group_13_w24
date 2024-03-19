@@ -14,7 +14,7 @@ export class AppController {
       message: 'All Available Routes Overview',
       nodes: overview.nodes,
       levels: overview.levels,
-      routesc: overview.edges,
+      routes: overview.edges,
     });
   }
   /*
