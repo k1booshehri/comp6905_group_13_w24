@@ -18,8 +18,12 @@ const RoutesPage = () => {
   });
 
   useEffect(() => {
-    const routesData = location.state?.routes || [];
-    processRoutes(routesData);
+    const { routes, nodes, levels } = location.state || {};
+    if (routes && nodes && levels) {
+      setStartPoints(nodes);
+      setLevels(levels);
+      processRoutes(routes);
+    }
   }, [location]);
 
   const processRoutes = (routesData) => {
@@ -74,7 +78,7 @@ const RoutesPage = () => {
       });
 
       try {
-        const response = await fetch(`http://localhost:3028/?${queryParams}`);
+        const response = await fetch(`http://localhost:3028/`);
         if (!response.ok) throw new Error('Network response was not ok');
         const result = await response.json();
 

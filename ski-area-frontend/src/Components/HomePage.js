@@ -8,10 +8,11 @@ const HomePage = () => {
   const findRoutes = async () => {
     try {
       const response = await fetch('http://localhost:3028/all-routes');
-      if (!response.ok) throw new Error('Network response was not ok');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const data = await response.json();
-      // Use navigate to go to the new route and pass state
-      navigate('/routes', { state: { routes: data.routes } });
+      navigate('/all-routes', { state: { routes: data.routesc, nodes: data.nodes, levels: data.levels } });
     } catch (error) {
       console.error('There was a problem with the fetch operation:', error);
     }
