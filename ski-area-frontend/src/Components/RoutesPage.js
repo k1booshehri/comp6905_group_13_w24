@@ -11,6 +11,11 @@ const RoutesPage = () => {
   const [selectedStart, setSelectedStart] = useState('');
   const [selectedEnd, setSelectedEnd] = useState('');
   const [selectedLevel, setSelectedLevel] = useState('');
+  const [routeSummary, setRouteSummary] = useState({
+    path: '',
+    totalTime: 0,
+    totalDistance: 0,
+  });
 
   useEffect(() => {
     const routesData = location.state?.routes || [];
@@ -19,21 +24,36 @@ const RoutesPage = () => {
 
   const processRoutes = (routesData) => {
     const nodes = new Set();
-    const links = [];
+    const linksMap = new Map();
     const levelSet = new Set();
 
     routesData.forEach((route) => {
+      const key = `${route.start}-${route.end}`;
       nodes.add(route.start);
       nodes.add(route.end);
-      if (route.level) {
-        levelSet.add(route.level);
+      if (route.level) levelSet.add(route.level);
+
+      // Combine labels for the same edge, avoiding duplicate 'L'
+      const existingEntry = linksMap.get(key);
+      const levelLabel = route.level || '';
+      const liftLabel = route.isLift ? 'L' : '';
+
+      if (existingEntry) {
+        if (levelLabel && !existingEntry.labels.includes(levelLabel)) {
+          existingEntry.labels.push(levelLabel);
+        }
+        if (liftLabel && !existingEntry.labels.includes(liftLabel)) {
+          existingEntry.labels.push(liftLabel);
+        }
+      } else {
+        linksMap.set(key, { labels: [levelLabel, liftLabel].filter(Boolean) });
       }
-      links.push({
-        source: route.start,
-        target: route.end,
-        name: `${route.start}-${route.end}`,
-        label: route.isLift ? (route.level ? `${route.level}, L` : 'L') : route.level,
-      });
+    });
+
+    const links = Array.from(linksMap, ([name, data]) => {
+      const [start, end] = name.split('-');
+      const label = data.labels.join(', ');
+      return { source: start, target: end, label };
     });
 
     setStartPoints([...nodes]);
@@ -46,30 +66,37 @@ const RoutesPage = () => {
   };
 
   const handleCalculateRoutes = async () => {
-    // Build query string
-    const queryParams = new URLSearchParams({
-      start: selectedStart,
-      end: selectedEnd,
-      level: selectedLevel
-    });
+    if (selectedStart && selectedEnd && selectedLevel) {
+      const queryParams = new URLSearchParams({
+        start: selectedStart,
+        end: selectedEnd,
+        level: selectedLevel
+      });
 
-    try {
-      const response = await fetch(`http://localhost:3028/`);
-      if (!response.ok) throw new Error('Network response was not ok');
-      const result = await response.json();
+      try {
+        const response = await fetch(`http://localhost:3028/?${queryParams}`);
+        if (!response.ok) throw new Error('Network response was not ok');
+        const result = await response.json();
 
-      // Assuming 'path' contains the array of routes
-      processRoutes(result.path);
-    } catch (error) {
-      console.error('There was an error fetching the routes:', error);
+        processRoutes(result.path);
+        setRouteSummary({
+          path: result.path.map(route => `${route.start}-${route.end}`).join(', '),
+          totalTime: result.totalTime,
+          totalDistance: result.totalDistance,
+        });
+      } catch (error) {
+        console.error('There was an error fetching the routes:', error);
+      }
+    } else {
+      alert('Please select start point, end point, and level to calculate routes.');
     }
   };
 
   return (
     <div>
       <h2>All Available Routes</h2>
-      <div style={{ marginBottom: '20px' }}>
-        <label>
+      <div style={{ marginBottom: '5px' }}>
+      <label>
           Start Point:
           <select value={selectedStart} onChange={(e) => setSelectedStart(e.target.value)}>
             <option value="">Select Start</option>
@@ -104,11 +131,16 @@ const RoutesPage = () => {
         </label>
         <button onClick={handleCalculateRoutes}>Calculate Routes</button>
       </div>
+      <div className="route-summary">
+        <p>Path: {routeSummary.path}</p>
+        <p>Total Time for path: {routeSummary.totalTime} minutes</p>
+        <p>Total Distance: {routeSummary.totalDistance} meters</p>
+      </div>
       <ForceGraph2D
         graphData={graphData}
         width={800}
-        height={600}
-        nodeCanvasObject={(node, ctx) => {
+        height={400}
+        nodeCanvasObject={(node, ctx, globalScale) => {
           const label = node.id;
           const fontSize = 12;
           ctx.font = `${fontSize}px Sans-Serif`;
@@ -117,7 +149,7 @@ const RoutesPage = () => {
           ctx.fillStyle = 'black';
           ctx.fillText(label, node.x, node.y);
         }}
-        linkCanvasObject={(link, ctx) => {
+        linkCanvasObject={(link, ctx, globalScale) => {
           // Draw the line
           ctx.beginPath();
           ctx.moveTo(link.source.x, link.source.y);
@@ -127,13 +159,16 @@ const RoutesPage = () => {
 
           // Draw the label if it exists
           if (link.label) {
+            const fontSize = 12 / globalScale;
+            ctx.font = `${fontSize}px Sans-Serif`;
             const textX = (link.source.x + link.target.x) / 2;
             const textY = (link.source.y + link.target.y) / 2;
-            const fontSize = 4; // Adjust as needed
-            ctx.font = `${fontSize}px Sans-Serif`;
             const textWidth = ctx.measureText(link.label).width;
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-            ctx.fillRect(textX - textWidth / 2, textY - fontSize / 2, textWidth, fontSize);
+            const textHeight = fontSize * 1.2;
+
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.fillRect(textX - textWidth / 2 - 4, textY - textHeight / 2 - 4, textWidth + 8, textHeight + 8);
+
             ctx.fillStyle = 'black';
             ctx.fillText(link.label, textX, textY);
           }
