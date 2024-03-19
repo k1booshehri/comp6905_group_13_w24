@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Stage, Layer, Rect, Text, Circle, Line, Image } from "react-konva";
 import InputLabel from "@mui/material/InputLabel";
@@ -20,93 +20,34 @@ const Graph = () => {
   const [locationIconRed] = useImage(locationRed);
   const [difficulty, setDifficulty] = React.useState("Black");
   const [origin, setOrigin] = React.useState(null);
+  const [routes, setRoutes] = useState([]);
   const [path, setPath] = React.useState([]);
   const [destination, setDestination] = React.useState(null);
   const handleChange = (e) => {
     setDifficulty(e.target.value);
   };
 
-  const [rects, setRects] = useState([
-    { x: 70, y: 160, text: "r1", textx: 170, texty: 180 },
-    { x: 180, y: 140, text: "r2", textx: 270, texty: 290 },
-    { x: 300, y: 290, text: "r3", textx: 510, texty: 420 },
-    { x: 100, y: 400, text: "r4", textx: 255, texty: 617 },
-    { x: 290, y: 618, text: "r5", textx: 440, texty: 625 },
-    { x: 534, y: 542, text: "r6", textx: 538, texty: 548 },
+  const [nodes, setNodes] = useState([
+    { x: 70, y: 160, text: "A", textx: 170, texty: 180 },
+    { x: 180, y: 140, text: "B", textx: 270, texty: 290 },
+    { x: 300, y: 290, text: "C", textx: 510, texty: 420 },
+    { x: 100, y: 400, text: "D", textx: 255, texty: 617 },
+    { x: 290, y: 618, text: "R", textx: 440, texty: 625 },
   ]);
 
-  const [lines, setLine] = useState([
-    {
-      startName: "r1",
-      startx: 70,
-      starty: 160,
-      endName: "r2",
-      endx: 180,
-      endy: 140,
-      weight: 10,
-      fill: "white",
-    },
-    {
-      startName: "r1",
-      startx: 70,
-      starty: 160,
-      endName: "r4",
-      endx: 100,
-      endy: 400,
-      weight: 5,
-      fill: "white",
-    },
-    {
-      startName: "r2",
-      startx: 180,
-      starty: 140,
-      endName: "r3",
-      endx: 300,
-      endy: 290,
-      weight: 10,
-      fill: "white",
-    },
-    {
-      startName: "r3",
-      startx: 300,
-      starty: 290,
-      endName: "r5",
-      endx: 290,
-      endy: 618,
-      weight: 1,
-      fill: "white",
-    },
-    {
-      startName: "r4",
-      startx: 100,
-      starty: 400,
-      endName: "r2",
-      endx: 180,
-      endy: 140,
-      weight: 5,
-      fill: "white",
-    },
-    {
-      startName: "r4",
-      startx: 100,
-      starty: 400,
-      endName: "r5",
-      endx: 290,
-      endy: 618,
-      weight: 3,
-      fill: "white",
-    },
-    {
-      startName: "r5",
-      startx: 290,
-      starty: 618,
-      endName: "r6",
-      endx: 534,
-      endy: 542,
-      weight: 4,
-      fill: "white",
-    },
-  ]);
+  const [lines, setLines] = useState([]);
+  const [pathEdges, setPathEdges] = useState([]);
+  useEffect(() => {
+    getGraphData();
+  }, []);
+
+  useEffect(() => {
+    createPath();
+  }, [path]);
+
+  useEffect(() => {
+    createGraph(routes);
+  }, [routes]);
 
   const onPointSelection = (name) => {
     if (!origin) {
@@ -114,25 +55,29 @@ const Graph = () => {
     } else if (!destination) {
       setDestination(name);
     } else {
+      let pathEdgesCopy = [...pathEdges];
+      for (let i = 0; i < pathEdgesCopy.length; i++) {
+        pathEdgesCopy[i].color = "Black";
+      }
+      setPathEdges(pathEdgesCopy);
       setDestination(null);
       setOrigin(name);
     }
   };
 
-  const getData = async () => {
+  const getPathData = async () => {
     if (origin && destination && difficulty)
       axios
-        .get("http://localhost:3000/", {
+        .get("http://localhost:3028/", {
           params: {
-            start: "A",
-            end: "B",
-            level: "Blue",
+            start: origin,
+            end: destination,
+            level: difficulty,
           },
         })
         .then(
-          (response) => {
-            // setPath(response)
-            console.log(response);
+          (res) => {
+            setPath(res.data.path);
           },
           (error) => {
             console.log(error);
@@ -140,6 +85,69 @@ const Graph = () => {
         );
     else console.log("Somthing went wrong");
   };
+
+  const createGraph = (edges) => {
+    let vertices = [...nodes];
+    if (edges) {
+      let edgesList = [];
+      for (let i = 0; i < edges.length; i++) {
+        const e = edges[i];
+        let originPoint = vertices.filter((n) => {
+          return n.text === e.start;
+        });
+        let destPoint = vertices.filter((n) => {
+          return n.text === e.end;
+        });
+        let edge = {
+          origin: e.start,
+          dest: e.end,
+          origin_x: originPoint[0]?.x,
+          origin_y: originPoint[0]?.y,
+          dest_x: destPoint[0]?.x,
+          dest_y: destPoint[0]?.y,
+          w: e.distance,
+          color: "black",
+          isLift: e.isLift,
+          strokeWidth: 3,
+        };
+        edgesList.push(edge);
+      }
+      setLines(edgesList);
+    }
+  };
+
+  const createPath = () => {
+    let pathEdges = [];
+    if (path.length > 0) {
+      let linesCopy = [...lines];
+      let pathCopy = [...path];
+      for (let i = 0; i < linesCopy.length; i++) {
+        const line = linesCopy[i];
+        for (let j = 0; j < pathCopy.length; j++) {
+          if (
+            pathCopy[j].start === line.origin &&
+            pathCopy[j].end === line.dest
+          ) {
+            linesCopy[i].color = "red";
+            pathEdges.push(linesCopy[i]);
+          }
+        }
+      }
+      setPathEdges(pathEdges);
+    }
+  };
+
+  const getGraphData = async () => {
+    axios.get("http://localhost:3028/all-routes").then(
+      (response) => {
+        setRoutes(response.data.routes);
+      },
+      (error) => {
+        console.log(error);
+      }
+    );
+  };
+
   return (
     <div>
       <Box sx={{}}>
@@ -167,9 +175,9 @@ const Graph = () => {
                 variant="contained"
                 size="large"
                 color="success"
-                onClick={getData}
+                onClick={getPathData}
               >
-                contained
+                Submit
               </Button>
             </Box>
           </Grid>
@@ -177,26 +185,26 @@ const Graph = () => {
       </Box>
       <Stage width={534 + 50} height={618 + 50}>
         <Layer>
-          {rects.map((rect) => {
+          {nodes.map((node) => {
             return (
               <div>
                 <Text
-                  x={rect.x + 20}
-                  y={rect.y + 10}
-                  text={rect.text}
+                  x={node.x + 20}
+                  y={node.y + 10}
+                  text={node.text}
                   fontSize={15}
                 />
                 <Image
-                  onClick={() => onPointSelection(rect.text)}
+                  onClick={() => onPointSelection(node.text)}
                   image={
-                    origin && rect.text === origin
+                    origin && node.text === origin
                       ? locationIconRed
-                      : destination && rect.text === destination
+                      : destination && node.text === destination
                       ? locationIconBlue
                       : locationIcon
                   }
-                  x={rect.x - 15}
-                  y={rect.y - 27}
+                  x={node.x - 15}
+                  y={node.y - 27}
                   width={30}
                   height={30}
                 />
@@ -206,8 +214,38 @@ const Graph = () => {
           {lines.map((line) => {
             return (
               <Line
-                points={[line.startx, line.starty, line.endx, line.endy]}
-                stroke="black"
+                points={[
+                  line.origin_x,
+                  line.origin_y,
+                  line.dest_x,
+                  line.dest_y,
+                ]}
+                stroke={line.color}
+                shadowForStrokeEnabled={true}
+                shadowColor="red"
+                strokeWidth={line.strokeWidth}
+                // shadowOffset={100}
+                // shadowOffsetX={2}
+                // shadowOffsetY={10}
+              />
+            );
+          })}
+          {pathEdges?.map((edge) => {
+            return (
+              <Line
+                points={[
+                  edge.origin_x,
+                  edge.origin_y,
+                  edge.dest_x,
+                  edge.dest_y,
+                ]}
+                stroke={edge.color}
+                shadowForStrokeEnabled={true}
+                shadowColor="red"
+                strokeWidth={edge.strokeWidth}
+                // shadowOffset={100}
+                // shadowOffsetX={2}
+                // shadowOffsetY={10}
               />
             );
           })}
