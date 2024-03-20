@@ -46,8 +46,13 @@ export class RouteService {
     return this.graph.getAllEdgesWithOverview();
   }
 
+  /*
   public findRoutesWithFallback(start: string, end: string, level?: Level): { path: Edge[], totalTime: number, totalDistance: number } {
     return this.graph.findRouteWithFallback(start, end, level);
-  }
+  }*/
+
+  public findAllRoutes(start: string, end: string): { message: string, routes: any[] } {
+  return this.graph.findAllRoutes(start, end);
+}
 
 }

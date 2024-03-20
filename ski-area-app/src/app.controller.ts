@@ -4,8 +4,8 @@ import { Edge, Level } from './route/models/edge.model';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
-  
+  constructor(private readonly appService: AppService) { }
+
 
   @Get('all-routes')
   getAllRoutesOverview(): string {
@@ -29,8 +29,17 @@ export class AppController {
 */
 
 
+@Get()
+getAllRoutes(
+  @Query('start') start: string = 'A',
+  @Query('end') end: string = 'D',
+): string {
+  const results = this.appService.findAllRoutes(start, end);
+  return JSON.stringify(results);
+}
 
-  @Get()
+  /*
+  @Get
   getDefaultRoute(
     @Query('start') start: string = 'A',
     @Query('end') end: string = 'R',
@@ -44,10 +53,5 @@ export class AppController {
       totalTime: result.totalTime,
       totalDistance: result.totalDistance,
     });
-  }
-
-  @Post('get-path')
-  getPath(@Body() request: Edge): JSON{
-    return this.appService.getPath(request);
-  }
+  }*/
 }

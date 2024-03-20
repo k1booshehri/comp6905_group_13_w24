@@ -92,6 +92,7 @@ export class Graph {
     return { nodes: nodesArray, levels: levelsArray, edges: allEdges };
   }
 
+  /*
   public findRouteWithFallback(start: string, end: string, level?: Level): { path: Edge[], totalTime: number, totalDistance: number } {
     // Objects to store visited nodes and the path to reach them
     const visited = new Set<string>();
@@ -151,6 +152,153 @@ export class Graph {
 
     return path;
   }
+  */
 
+  public findAllRoutes(start: string, end: string): { message: string, routes: any[] } {
+    let routes = [];
+    const visited = new Set<string>();
+    const path = [];
+
+    // Helper function to explore all paths recursively
+    const dfs = (node: string, path: Edge[], visited: Set<string>) => {
+      if (node === end) {
+        // Calculate total time and distance for the current path
+        const totalTime = path.reduce((acc, edge) => acc + edge.time, 0);
+        const totalDistance = path.reduce((acc, edge) => acc + edge.distance, 0);
+        
+        // Add the current path to the routes array
+        routes.push({ path: [...path], totalTime, totalDistance });
+        return;
+      }
+
+      visited.add(node);
+      const edges = this.adjList.get(node);
+
+      if (!edges) return;
+
+      for (const edge of edges) {
+        if (!visited.has(edge.end)) {
+          // Add current edge to the path and continue DFS
+          path.push(edge);
+          dfs(edge.end, path, visited);
+          path.pop(); // Backtrack to explore other paths
+        }
+      }
+
+      visited.delete(node);
+    };
+
+    dfs(start, path, visited);
+
+    const result = this.processRoutesWithLiftsAndLevels({
+      message: "Routes Overview",
+      routes: routes.map(route => ({
+        path: route.path.map(edge => ({
+          start: edge.start,
+          end: edge.end,
+          time: edge.time,
+          distance: edge.distance,
+          level: edge.level,
+          isLift: edge.isLift
+        })),
+        totalTime: route.totalTime,
+        totalDistance: route.totalDistance
+      }))
+    });
+
+    return this.categorizeRoutes(result);;
+  }
+
+  private processRoutesWithLiftsAndLevels(result: { message: string, routes: any[] }): { message: string, routes: any[] } {
+    result.routes.forEach(route => {
+      let liftCount = 0;
+      const levels = new Set<string>();
+      
+      route.path.forEach((segment: any) => {
+        if (segment.isLift) liftCount++;
+        if (segment.level) levels.add(segment.level);
+      });
+
+      route.liftCount = liftCount;
+      route.distinctLevels = Array.from(levels);
+    });
+
+    return result;
+  }
+
+  private categorizeRoutes(result: { message: string, routes: any[] }): { message: string, routes: any[] } {
+    let fastestTime = Infinity;
+    let longestTime = 0;
+    let minimumLifts = Infinity;
+  
+    // First pass to find the extremes
+    result.routes.forEach((route, index) => {
+      // Fastest
+      if (route.totalTime < fastestTime) {
+        fastestTime = route.totalTime;
+      }
+  
+      // Longest
+      if (route.totalTime > longestTime) {
+        longestTime = route.totalTime;
+      }
+  
+      // Minimum lift usage
+      if (route.liftCount < minimumLifts) {
+        minimumLifts = route.liftCount;
+      }
+    });
+  
+    // Assign categories based on new criteria
+    result.routes.forEach((route) => {
+      // Reset category
+      route.category = [];
+  
+      // Assign fastest, longest, minimum lift usage
+      if (route.totalTime === fastestTime) {
+        route.category.push("fastest");
+      }
+      if (route.totalTime === longestTime) {
+        route.category.push("longest");
+      }
+      if (route.liftCount === minimumLifts) {
+        route.category.push("minimum lift usage");
+      }
+  
+      // Determine difficulty level
+      const levels = new Set(route.distinctLevels);
+      if (levels.has("black") && (levels.has("blue") || levels.has("red"))) {
+        route.category.push("hardest");
+      } else if (levels.has("red") || (levels.has("blue") && levels.has("red"))) {
+        route.category.push("moderate");
+      } else if (levels.has("blue") && levels.size === 1) {
+        route.category.push("easiest");
+      }
+  
+      // Combine categories for scenic and difficulty levels with minimum lift usage
+      if (route.totalDistance > 0 && route.path.some(segment => segment.isLift) && route.path.some(segment => !segment.isLift)) {
+        route.category.push("most scenic");
+      }
+  
+      // Finalize the category by joining multiple conditions, if any
+      if (route.category.length > 1) {
+        const isMinimumLiftUsageIncluded = route.category.includes("minimum lift usage");
+        route.category = route.category.filter(cat => cat !== "minimum lift usage");
+  
+        // Append "with minimum lift usage" if applicable
+        if (isMinimumLiftUsageIncluded) {
+          route.category[route.category.length - 1] += " with minimum lift usage";
+        }
+      } else if (route.category.length === 1) {
+        route.category = route.category[0];
+      } else {
+        route.category = "unclassified"; // Fallback in case no category fits
+      }
+    });
+  
+    return result;
+  }
+  
+  
 
 }

@@ -18,8 +18,8 @@ export class AppService {
     return this.routeService.getAllRoutesOverview();
   }
 
-  public findRoutesWithFallback(start: string, end: string, level?: Level): { path: Edge[], totalTime: number, totalDistance: number } {
-    return this.routeService.findRoutesWithFallback(start, end, level);
+  public findAllRoutes(start: string, end: string): { message: string, routes: any[] } {
+    return this.routeService.findAllRoutes(start, end);
   }
 
 

@@ -22,7 +22,7 @@ const HomePage = () => {
     <div>
       <img src={myImage} style={{ height: '350px' }} />
       <div>
-        <button onClick={findRoutes}>Find Routes</button>
+        <button onClick={findRoutes}>Calculate Route</button>
         <button style={{ marginLeft: '5px' }}>Find Restaurants</button>
         <button style={{ marginLeft: '5px' }}>Find Restrooms</button>
       </div>
