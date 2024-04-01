@@ -39,27 +39,6 @@ export class Graph {
     });
     return allEdges;
   }
-
-  /*
-  public getAllEdgesWithOverview(): { nodes: string[], levels: Level[], types: LiftType[], edges: Edge[] } {
-    const levelsSet: Set<Level> = new Set();
-    const typesSet: Set<LiftType> = new Set();
-  
-    this.adjList.forEach(edges => {
-      edges.forEach(edge => {
-        if (edge.level) levelsSet.add(edge.level);
-        if (edge.type) typesSet.add(edge.type);
-      });
-    });
-  
-    const nodesArray = Array.from(this.nodes);
-    const levelsArray = Array.from(levelsSet);
-    const typesArray = Array.from(typesSet);
-    const allEdges = this.getAllEdges();
-  
-    return { nodes: nodesArray, levels: levelsArray, types: typesArray, edges: allEdges };
-  }
-  */
   
   public getAllEdgesWithOverview(): { nodes: string[], levels: Level[], types: LiftType[], edges: Edge[] } {
     const levelsSet: Set<Level> = new Set();
@@ -111,59 +90,12 @@ export class Graph {
     return { nodes: nodesArray, levels: levelsArray, edges: allEdges };
   }
 
-  /*
-  public findAllRoutes(start: string, end: string, level: Level): { message: string, routes: any[] } {
-    let routes = [];
-    const visited = new Set<string>();
-
-    const dfs = (node: string, path: Edge[]) => {
-      if (node === end) {
-        const { totalTime, totalDistance, categories } = this.calculatePathDetails(path, level);
-        routes.push({ path: [...path], totalTime, totalDistance, categories });
-        return;
-      }
-
-      visited.add(node);
-      const edges = this.adjList.get(node) || [];
-
-      for (const edge of edges) {
-        if (!visited.has(edge.end) && edge.level === level) {
-          dfs(edge.end, [...path, edge]);
-        }
-      }
-
-      visited.delete(node);
-    };
-
-    dfs(start, []);
-
-    return {
-      message: "Routes Overview",
-      routes: routes.map(route => ({
-        // Ensure edge is defined before passing to isLift:
-        path: route.path.map(edge => ({
-          start: edge.start,
-          end: edge.end,
-          name: edge.name,
-          difficulty: edge.level,
-          time: edge.time,
-          distance: edge.distance,
-          type: edge.type,
-          isLift: isLift(edge) // Now safely checks if edge is undefined
-        })),
-        totalTime: route.totalTime,
-        totalDistance: route.totalDistance,
-        categories: route.categories
-      }))
-    };
-  }
-  */
-
+  
   public findAllRoutes(start: string, end: string, level: Level): { message: string, routes: any[] } {
     let routes = [];
     const visited = new Set<string>();
     const uniquePaths = new Set<string>(); // To store unique paths
-
+  
     const dfs = (node: string, path: Edge[]) => {
       if (node === end) {
         const { totalTime, totalDistance, categories } = this.calculatePathDetails(path, level);
@@ -174,29 +106,36 @@ export class Graph {
         }
         return;
       }
-
+  
       visited.add(node);
       const edges = this.adjList.get(node) || [];
-
+  
       for (const edge of edges) {
-        if (!visited.has(edge.end) && edge.level === level) {
+        if (!visited.has(edge.end) && (edge.level === level || isLift(edge))) {
+          // Apply level filtering for slopes only; include all lifts regardless of their level
           dfs(edge.end, [...path, edge]);
         }
       }
-
+  
       visited.delete(node);
     };
-
+  
     dfs(start, []);
-
+  
     if (routes.length === 0) { // Check if no routes are found
       return { message: "No path found with given conditions", routes: [] };
     }
-
+  
+    // Here, directly incorporate a basic categorization logic before returning the results
+    // For simplicity, this example does not include a separate categorizeRoutes method
+    routes.forEach(route => {
+      // Simple example of categorization logic, adjust according to your needs
+      route.category = route.totalDistance > 1000 ? "Long route" : "Short route";
+    });
+  
     return {
       message: "Routes Overview",
       routes: routes.map(route => ({
-        // Ensure edge is defined before passing to isLift:
         path: route.path.map(edge => ({
           start: edge.start,
           end: edge.end,
@@ -205,124 +144,42 @@ export class Graph {
           time: edge.time,
           distance: edge.distance,
           type: edge.type,
-          isLift: isLift(edge) // Now safely checks if edge is undefined
+          isLift: isLift(edge)
         })),
         totalTime: route.totalTime,
         totalDistance: route.totalDistance,
-        categories: route.categories
+        categories: route.categories,
+        category: route.category // Include the direct category assignment here
       }))
     };  
   }
-
-
+  
   private calculatePathDetails(path: Edge[], requestedLevel: Level) {
     let totalTime = 0;
     let totalDistance = 0;
-    let levelMultiplier = { Easy: 0.5, Intermediate: 1, Difficult: 1.5 };
-
+    let categories = []; // Initialize categories array
+  
+    // Calculate totalTime and totalDistance as before
     for (const edge of path) {
       if (isLift(edge)) {
-        totalTime += edge.time;
+          // If it's a lift, add its time to totalTime
+          totalTime += edge.time;
       } else {
-        totalTime += edge.distance / 840; // Slope time calculation
-        totalDistance += edge.distance;
+          // If it's a slope, calculate time based on distance and add to totalTime
+          // and also add its distance to totalDistance
+          totalTime += edge.distance / 840; // Slope time calculation: distance / 840 to convert to minutes
+          totalDistance += edge.distance;
       }
     }
-
-    // Categorize
-    let categoryMultiplier = totalDistance * levelMultiplier[requestedLevel];
-    let categories = []; // Simplified categorization example
-
+  
+    // Example categorization based on totalDistance (you can adjust this logic)
+    if (totalDistance > 2000) {
+      categories.push("Long");
+    } else {
+      categories.push("Short");
+    }
+  
     return { totalTime, totalDistance, categories };
   }
 
-  private processRoutesWithLiftsAndLevels(result: { message: string, routes: any[] }): { message: string, routes: any[] } {
-    result.routes.forEach(route => {
-      let liftCount = 0;
-      const levels = new Set<string>();
-      
-      route.path.forEach((segment: any) => {
-        if (segment.isLift) liftCount++;
-        if (segment.level) levels.add(segment.level);
-      });
-
-      route.liftCount = liftCount;
-      route.distinctLevels = Array.from(levels);
-    });
-
-    return result;
-  }
-
-  private categorizeRoutes(result: { message: string, routes: any[] }): { message: string, routes: any[] } {
-    let fastestTime = Infinity;
-    let longestTime = 0;
-    let minimumLifts = Infinity;
-  
-    // First pass to find the extremes
-    result.routes.forEach((route, index) => {
-      // Fastest
-      if (route.totalTime < fastestTime) {
-        fastestTime = route.totalTime;
-      }
-  
-      // Longest
-      if (route.totalTime > longestTime) {
-        longestTime = route.totalTime;
-      }
-  
-      // Minimum lift usage
-      if (route.liftCount < minimumLifts) {
-        minimumLifts = route.liftCount;
-      }
-    });
-  
-    // Assign categories based on new criteria
-    result.routes.forEach((route) => {
-      // Reset category
-      route.category = [];
-  
-      // Assign fastest, longest, minimum lift usage
-      if (route.totalTime === fastestTime) {
-        route.category.push("fastest");
-      }
-      if (route.totalTime === longestTime) {
-        route.category.push("longest");
-      }
-      if (route.liftCount === minimumLifts) {
-        route.category.push("minimum lift usage");
-      }
-  
-      // Determine difficulty level
-      const levels = new Set(route.distinctLevels);
-      if (levels.has("Difficult") && (levels.has("Easy") || levels.has("Intermediate"))) {
-        route.category.push("hardest");
-      } else if (levels.has("Intermediate") || (levels.has("Easy") && levels.has("Intermediate"))) {
-        route.category.push("moderate");
-      } else if (levels.has("Easy") && levels.size === 1) {
-        route.category.push("easiest");
-      }
-  
-      // Combine categories for scenic and difficulty levels with minimum lift usage
-      if (route.totalDistance > 0 && route.path.some(segment => segment.isLift) && route.path.some(segment => !segment.isLift)) {
-        route.category.push("most scenic");
-      }
-  
-      // Finalize the category by joining multiple conditions, if any
-      if (route.category.length > 1) {
-        const isMinimumLiftUsageIncluded = route.category.includes("minimum lift usage");
-        route.category = route.category.filter(cat => cat !== "minimum lift usage");
-  
-        // Append "with minimum lift usage" if applicable
-        if (isMinimumLiftUsageIncluded) {
-          route.category[route.category.length - 1] += " with minimum lift usage";
-        }
-      } else if (route.category.length === 1) {
-        route.category = route.category[0];
-      } else {
-        route.category = "unclassified"; // Fallback in case no category fits
-      }
-    });
-  
-    return result;
-  }
 }

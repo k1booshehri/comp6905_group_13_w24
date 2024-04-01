@@ -221,6 +221,7 @@ const RoutesPage = () => {
           ))}
         </select>
         <button onClick={handleRequestRoutes}>Request Routes</button>
+        {error && <div style={{ color: 'red', textAlign: 'center' }}>{error}</div>}
         <div>
         <h2 style={{ textAlign: 'center' }}>Lifts</h2>
         {renderLiftsTable()}
@@ -230,7 +231,7 @@ const RoutesPage = () => {
         {renderSlopesTable()}
       </div>
       </div>
-      {error && <div style={{ color: 'red', textAlign: 'center' }}>{error}</div>}
+      
       {routes.length > 0 ? renderRoutesTable() : null}
       {renderPathDetails()}
     </div>
