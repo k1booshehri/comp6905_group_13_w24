@@ -16,6 +16,7 @@ export class RouteService {
     return ['Easy', 'Intermediate', 'Difficult'].includes(value);
   }
 
+  /*
   public findRoutes(start: string, end: string, level: string) {
     if (!this.isLevel(level)) {
       throw new Error('Invalid level');
@@ -23,7 +24,17 @@ export class RouteService {
     const results = this.graph.findAllRoutes(start, end, level as Level);
     console.log("Filtered Routes : ", results);
     return results;
+  }*/
+
+  public findRoutes(start: string, end: string, level: string) {
+    const results = this.graph.findAllRoutes(start, end, level as Level);
+    if (results.routes.length === 0) {
+        return { message: "No path found with given conditions", routes: [] };
+    }
+    console.log("Filtered Routes : ", results);
+    return results;
   }
+
 
   private initializeSampleGraph(): void {
     // Define slopes

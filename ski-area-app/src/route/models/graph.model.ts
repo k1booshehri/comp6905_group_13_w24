@@ -111,6 +111,7 @@ export class Graph {
     return { nodes: nodesArray, levels: levelsArray, edges: allEdges };
   }
 
+  /*
   public findAllRoutes(start: string, end: string, level: Level): { message: string, routes: any[] } {
     let routes = [];
     const visited = new Set<string>();
@@ -156,6 +157,63 @@ export class Graph {
       }))
     };
   }
+  */
+
+  public findAllRoutes(start: string, end: string, level: Level): { message: string, routes: any[] } {
+    let routes = [];
+    const visited = new Set<string>();
+    const uniquePaths = new Set<string>(); // To store unique paths
+
+    const dfs = (node: string, path: Edge[]) => {
+      if (node === end) {
+        const { totalTime, totalDistance, categories } = this.calculatePathDetails(path, level);
+        const pathKey = path.map(edge => edge.name).join('-'); // Generating a unique key for the path
+        if (!uniquePaths.has(pathKey)) { // Check if path is unique
+          routes.push({ path: [...path], totalTime, totalDistance, categories });
+          uniquePaths.add(pathKey); // Add path key to set
+        }
+        return;
+      }
+
+      visited.add(node);
+      const edges = this.adjList.get(node) || [];
+
+      for (const edge of edges) {
+        if (!visited.has(edge.end) && edge.level === level) {
+          dfs(edge.end, [...path, edge]);
+        }
+      }
+
+      visited.delete(node);
+    };
+
+    dfs(start, []);
+
+    if (routes.length === 0) { // Check if no routes are found
+      return { message: "No path found with given conditions", routes: [] };
+    }
+
+    return {
+      message: "Routes Overview",
+      routes: routes.map(route => ({
+        // Ensure edge is defined before passing to isLift:
+        path: route.path.map(edge => ({
+          start: edge.start,
+          end: edge.end,
+          name: edge.name,
+          difficulty: edge.level,
+          time: edge.time,
+          distance: edge.distance,
+          type: edge.type,
+          isLift: isLift(edge) // Now safely checks if edge is undefined
+        })),
+        totalTime: route.totalTime,
+        totalDistance: route.totalDistance,
+        categories: route.categories
+      }))
+    };  
+  }
+
 
   private calculatePathDetails(path: Edge[], requestedLevel: Level) {
     let totalTime = 0;
@@ -173,7 +231,7 @@ export class Graph {
 
     // Categorize
     let categoryMultiplier = totalDistance * levelMultiplier[requestedLevel];
-    let categories = ['fastest', 'longest', 'minimum lift usage', 'hardest', 'moderate', 'easiest']; // Simplified categorization example
+    let categories = []; // Simplified categorization example
 
     return { totalTime, totalDistance, categories };
   }
