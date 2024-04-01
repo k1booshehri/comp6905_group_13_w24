@@ -122,14 +122,14 @@ const RoutesPage = () => {
       return; // Exit the function if validation fails
     }
     setError(''); // Clear any previous errors
-  
+
     const postData = {
       start: startPoint,
       end: endPoint,
       level: level
     };
     console.log("Sending POST request with body:", postData);
-  
+
     try {
       const response = await fetch('http://localhost:3028/find-routes', {
         method: 'POST',
@@ -222,18 +222,17 @@ const RoutesPage = () => {
         </select>
         <button onClick={handleRequestRoutes}>Request Routes</button>
         {error && <div style={{ color: 'red', textAlign: 'center' }}>{error}</div>}
+        {routes.length > 0 ? renderRoutesTable() : null}
+        {renderPathDetails()}
         <div>
-        <h2 style={{ textAlign: 'center' }}>Lifts</h2>
-        {renderLiftsTable()}
+          <h2 style={{ textAlign: 'center' }}>Lifts</h2>
+          {renderLiftsTable()}
+        </div>
+        <div>
+          <h2 style={{ textAlign: 'center' }}>Slopes</h2>
+          {renderSlopesTable()}
+        </div>
       </div>
-      <div>
-        <h2 style={{ textAlign: 'center' }}>Slopes</h2>
-        {renderSlopesTable()}
-      </div>
-      </div>
-      
-      {routes.length > 0 ? renderRoutesTable() : null}
-      {renderPathDetails()}
     </div>
   );
 
