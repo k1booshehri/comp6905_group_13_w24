@@ -12,6 +12,19 @@ export class RouteService {
     this.initializeSampleGraph();
   }
 
+  private isLevel(value: string): value is Level {
+    return ['Easy', 'Intermediate', 'Difficult'].includes(value);
+  }
+
+  public findRoutes(start: string, end: string, level: string) {
+    if (!this.isLevel(level)) {
+      throw new Error('Invalid level');
+    }
+    const results = this.graph.findAllRoutes(start, end, level as Level);
+    console.log("Filtered Routes : ", results);
+    return results;
+  }
+
   private initializeSampleGraph(): void {
     // Define slopes
     const slopes: Edge[] = [
@@ -56,21 +69,38 @@ export class RouteService {
     const lifts: Edge[] = [
       // Populate with lift details from the image provided
       new Edge('Kornockbahn', 'X', 'R', 7, 0, 'Easy', '6-chair lift'),
+      new Edge('Kornockbahn', 'R', 'X', 7, 0, 'Easy', '6-chair lift'),
       new Edge('Engländerlift', 'P', 'Y', 5, 0, 'Easy', 'T-bar'),
+      new Edge('Engländerlift', 'Y', 'P', 5, 0, 'Easy', 'T-bar'),
       new Edge('Hüttenexpress',	'A1',	'A2',	5,	0, 'Easy',	'T-bar'),
+      new Edge('Hüttenexpress',	'A2',	'A1',	5,	0, 'Easy',	'T-bar'),
       new Edge('Seitensprunglift',	'J',	'L',	5,	0,'Easy',	'T-bar'),
+      new Edge('Seitensprunglift',	'L',	'J',	5,	0,'Easy',	'T-bar'),
       new Edge('Maulwurf',	'P',	'R',	5,	0,'Easy',	'T-bar'),
+      new Edge('Maulwurf',	'R',	'P',	5,	0,'Easy',	'T-bar'),
       new Edge('Ottifantenlift',	'P1',	'P7',	5,	0,'Easy',	'T-bar'),
+      new Edge('Ottifantenlift',	'P7',	'P1',	5,	0,'Easy',	'T-bar'),
       new Edge('Hirschkogellift',	'W1',	'T',	5,	0,	'Easy','T-bar'),
+      new Edge('Hirschkogellift',	'T',	'W1',	5,	0,	'Easy','T-bar'),
       new Edge('Turrachbahn',	'D',	'E',	7,	0,	'Easy','6-chair lift'),
+      new Edge('Turrachbahn',	'E',	'D',	7,	0,	'Easy','6-chair lift'),
       new Edge('Zirbenwaldbahn',	'N',	'M',	7,	0,'Easy',	'6-chair lift'),
+      new Edge('Zirbenwaldbahn',	'M',	'N',	7,	0,'Easy',	'6-chair lift'),
       new Edge('Sonnenbahn',	'F',	'G',	7,	0,	'Easy','2-chair lift'),
+      new Edge('Sonnenbahn',	'G',	'F',	7,	0,	'Easy','2-chair lift'),
       new Edge('Panoramabahn',	'C1',	'A1',	10,	0,'Easy','Chair lift/cable car'),
+      new Edge('Panoramabahn',	'A1',	'C1',	10,	0,'Easy','Chair lift/cable car'),
       new Edge('Schafalmbahn',	'X',	'U',	7,	0,	'Easy','6-chair lift'),
+      new Edge('Schafalmbahn',	'U',	'X',	7,	0,	'Easy','6-chair lift'),
       new Edge('Weitentallift',	'A',	'B',	5,	0,'Easy',	'T-bar'),
+      new Edge('Weitentallift',	'B',	'A',	5,	0,'Easy',	'T-bar'),
       new Edge('Übungswiesenlift',	'P2',	'Y',	5,	0,'Easy',	'T-bar'),
+      new Edge('Übungswiesenlift',	'Y',	'P2',	5,	0,'Easy',	'T-bar'),
       new Edge('Wildkopfbahn',	'Q',	'P',	7,	0,	'Easy','6-chair lift'),
-      new Edge('Nocky-Blitz',	'E1',	'E2',	10,	0,	'Easy','Rack railway')
+      new Edge('Wildkopfbahn',	'P',	'Q',	7,	0,	'Easy','6-chair lift'),
+      new Edge('Nocky-Blitz',	'E1',	'E2',	10,	0,	'Easy','Rack railway'),
+      new Edge('Nocky-Blitz',	'E2',	'E1',	10,	0,	'Easy','Rack railway')
+
     ];
   
     // Add edges to the graph for slopes
@@ -80,9 +110,9 @@ export class RouteService {
     lifts.forEach(lift => {
       this.graph.addEdge(lift);
       // For bidirectional lifts, add an edge in the reverse direction
-      if (isLift(lift)) {
-        this.graph.addEdge(new Edge(lift.name, lift.end, lift.start, lift.time, lift.distance, lift.level, lift.type));
-      }
+      //if (isLift(lift)) {
+        //this.graph.addEdge(new Edge(lift.name, lift.end, lift.start, lift.time, lift.distance, lift.level, lift.type));
+      //}
     });
   }
 
@@ -91,19 +121,10 @@ export class RouteService {
     return this.graph.getAllEdges(); // Assuming Graph class has getAllEdges method
   }
 
-
+  //for getting the all routes
   public getAllRoutesOverview(): { nodes: string[], levels: Level[], edges: Edge[] } {
     // This calls the new method from the Graph class
     return this.graph.getAllEdgesWithOverview();
   }
-
-  /*
-  public findRoutesWithFallback(start: string, end: string, level?: Level): { path: Edge[], totalTime: number, totalDistance: number } {
-    return this.graph.findRouteWithFallback(start, end, level);
-  }*/
-
-  public findAllRoutes(start: string, end: string): { message: string, routes: any[] } {
-  return this.graph.findAllRoutes(start, end);
-}
 
 }

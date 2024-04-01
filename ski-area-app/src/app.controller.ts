@@ -1,11 +1,10 @@
 import { Controller, Get, Req, Post, Body, Query } from '@nestjs/common';
 import { AppService } from './app.service';
-import { Edge, Level } from './route/models/edge.model';
+
 
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) { }
-
 
   @Get('all-routes')
   getAllRoutesOverview(): string {
@@ -17,41 +16,10 @@ export class AppController {
       routes: overview.edges,
     });
   }
-  /*
-  getAllRoutes(): string {
-    const routes = this.appService.getAllRoutes();
-    return JSON.stringify({
-      message: 'All Available Routes',
-      routes: routes,
-    });
-    
+  
+  @Post('find-routes')
+  findRoutes(@Body() body: { start: string; end: string; level: string }) {
+    return this.appService.findRoutes(body.start, body.end, body.level);
   }
-*/
 
-
-@Get()
-getAllRoutes(
-  @Query('start') start: string = 'A',
-  @Query('end') end: string = 'D',
-): string {
-  const results = this.appService.findAllRoutes(start, end);
-  return JSON.stringify(results);
-}
-
-  /*
-  @Get
-  getDefaultRoute(
-    @Query('start') start: string = 'A',
-    @Query('end') end: string = 'R',
-    @Query('level') level: Level = 'blue'
-  ): string {
-    // Calls the method with the default parameters or with the provided query parameters
-    const result = this.appService.findRoutesWithFallback(start, end, level);
-    return JSON.stringify({
-      message: 'Default Route',
-      path: result.path,
-      totalTime: result.totalTime,
-      totalDistance: result.totalDistance,
-    });
-  }*/
 }

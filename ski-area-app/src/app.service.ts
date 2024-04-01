@@ -13,21 +13,15 @@ export class AppService {
     return this.routeService.getAllRoutes();
   }
 
+  //for getting the all routs
   public getAllRoutesOverview(): { nodes: string[], levels: Level[], edges: Edge[] } {
     // Call the new method in RouteService
     return this.routeService.getAllRoutesOverview();
   }
 
-  public findAllRoutes(start: string, end: string): { message: string, routes: any[] } {
-    return this.routeService.findAllRoutes(start, end);
+  public findRoutes(start: string, end: string, level: string) {
+    return this.routeService.findRoutes(start, end, level);
   }
 
-
-  getPath(request): JSON{
-    let a = [];
-    let graph = new Graph();
-    a['path'] = []; //dijkstra theke jeta return korbe ota hbe a value or call dijkstra function here
-    return JSON.parse(JSON.stringify(a));
-  }
 
 }

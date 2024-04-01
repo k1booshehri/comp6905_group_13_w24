@@ -83,59 +83,71 @@ export class Graph {
     return { nodes: nodesArray, levels: levelsArray, edges: allEdges };
   }
 
-  public findAllRoutes(start: string, end: string): { message: string, routes: any[] } {
+  public findAllRoutes(start: string, end: string, level: Level): { message: string, routes: any[] } {
     let routes = [];
     const visited = new Set<string>();
-    const path = [];
 
-    // Helper function to explore all paths recursively
-    const dfs = (node: string, path: Edge[], visited: Set<string>) => {
+    const dfs = (node: string, path: Edge[]) => {
       if (node === end) {
-        // Calculate total time and distance for the current path
-        const totalTime = path.reduce((acc, edge) => acc + edge.time, 0);
-        const totalDistance = path.reduce((acc, edge) => acc + edge.distance, 0);
-        
-        // Add the current path to the routes array
-        routes.push({ path: [...path], totalTime, totalDistance });
+        const { totalTime, totalDistance, categories } = this.calculatePathDetails(path, level);
+        routes.push({ path: [...path], totalTime, totalDistance, categories });
         return;
       }
 
       visited.add(node);
-      const edges = this.adjList.get(node);
-
-      if (!edges) return;
+      const edges = this.adjList.get(node) || [];
 
       for (const edge of edges) {
-        if (!visited.has(edge.end)) {
-          // Add current edge to the path and continue DFS
-          path.push(edge);
-          dfs(edge.end, path, visited);
-          path.pop(); // Backtrack to explore other paths
+        if (!visited.has(edge.end) && edge.level === level) {
+          dfs(edge.end, [...path, edge]);
         }
       }
 
       visited.delete(node);
     };
 
-    dfs(start, path, visited);
+    dfs(start, []);
 
-    const result = this.processRoutesWithLiftsAndLevels({
+    return {
       message: "Routes Overview",
       routes: routes.map(route => ({
+        // Ensure edge is defined before passing to isLift:
         path: route.path.map(edge => ({
           start: edge.start,
           end: edge.end,
+          name: edge.name,
+          difficulty: edge.level,
           time: edge.time,
           distance: edge.distance,
-          level: edge.level,
-          isLift: edge.isLift
+          type: edge.type,
+          isLift: isLift(edge) // Now safely checks if edge is undefined
         })),
         totalTime: route.totalTime,
-        totalDistance: route.totalDistance
+        totalDistance: route.totalDistance,
+        categories: route.categories
       }))
-    });
+    };
+  }
 
-    return this.categorizeRoutes(result);;
+  private calculatePathDetails(path: Edge[], requestedLevel: Level) {
+    let totalTime = 0;
+    let totalDistance = 0;
+    let levelMultiplier = { Easy: 0.5, Intermediate: 1, Difficult: 1.5 };
+
+    for (const edge of path) {
+      if (isLift(edge)) {
+        totalTime += edge.time;
+      } else {
+        totalTime += edge.distance / 840; // Slope time calculation
+        totalDistance += edge.distance;
+      }
+    }
+
+    // Categorize
+    let categoryMultiplier = totalDistance * levelMultiplier[requestedLevel];
+    let categories = ['fastest', 'longest', 'minimum lift usage', 'hardest', 'moderate', 'easiest']; // Simplified categorization example
+
+    return { totalTime, totalDistance, categories };
   }
 
   private processRoutesWithLiftsAndLevels(result: { message: string, routes: any[] }): { message: string, routes: any[] } {
@@ -196,11 +208,11 @@ export class Graph {
   
       // Determine difficulty level
       const levels = new Set(route.distinctLevels);
-      if (levels.has("black") && (levels.has("blue") || levels.has("red"))) {
+      if (levels.has("Difficult") && (levels.has("Easy") || levels.has("Intermediate"))) {
         route.category.push("hardest");
-      } else if (levels.has("red") || (levels.has("blue") && levels.has("red"))) {
+      } else if (levels.has("Intermediate") || (levels.has("Easy") && levels.has("Intermediate"))) {
         route.category.push("moderate");
-      } else if (levels.has("blue") && levels.size === 1) {
+      } else if (levels.has("Easy") && levels.size === 1) {
         route.category.push("easiest");
       }
   
@@ -227,7 +239,4 @@ export class Graph {
   
     return result;
   }
-  
-  
-
 }

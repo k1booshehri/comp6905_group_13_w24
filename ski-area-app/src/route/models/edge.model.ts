@@ -13,6 +13,6 @@ export class Edge {
   ) {}
 }
 
-export function isLift(edge: Edge): boolean {
-  return typeof edge.type !== 'undefined';
+export function isLift(edge: Edge | undefined): boolean {
+  return !!edge && typeof edge.type !== 'undefined';
 }
