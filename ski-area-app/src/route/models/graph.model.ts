@@ -40,6 +40,7 @@ export class Graph {
     return allEdges;
   }
 
+  /*
   public getAllEdgesWithOverview(): { nodes: string[], levels: Level[], types: LiftType[], edges: Edge[] } {
     const levelsSet: Set<Level> = new Set();
     const typesSet: Set<LiftType> = new Set();
@@ -58,8 +59,35 @@ export class Graph {
   
     return { nodes: nodesArray, levels: levelsArray, types: typesArray, edges: allEdges };
   }
+  */
   
+  public getAllEdgesWithOverview(): { nodes: string[], levels: Level[], types: LiftType[], edges: Edge[] } {
+    const levelsSet: Set<Level> = new Set();
+    const typesSet: Set<LiftType> = new Set();
+    const uniqueLifts = new Set<string>(); // Use to track which lifts have been added
 
+    // Adjusted scope for these arrays
+    const nodesArray = Array.from(this.nodes);
+    const allEdges = this.getAllEdges().filter(edge => {
+        // For lifts, check and include only one direction
+        if (isLift(edge)) {
+            if (uniqueLifts.has(edge.name)) {
+                return false; // This lift (in one direction) is already included
+            }
+            uniqueLifts.add(edge.name); // Mark this lift as included
+        }
+        // Collect levels and types
+        if (edge.level) levelsSet.add(edge.level);
+        if (edge.type) typesSet.add(edge.type);
+        return true; // Include this edge
+    });
+
+    // Now `levelsArray` and `typesArray` can directly use the sets filled during filtering
+    const levelsArray = Array.from(levelsSet);
+    const typesArray = Array.from(typesSet);
+
+    return { nodes: nodesArray, levels: levelsArray, types: typesArray, edges: allEdges };
+  }
 
   public getGraphOverview(): { nodes: string[], levels: Level[], edges: Edge[] } {
     // Initialize a Set to store all unique levels

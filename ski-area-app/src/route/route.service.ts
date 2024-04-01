@@ -103,17 +103,9 @@ export class RouteService {
 
     ];
   
-    // Add edges to the graph for slopes
+    // Add edges & lifts to the graph for slopes
     slopes.forEach(slope => this.graph.addEdge(slope));
-  
-    // Add edges to the graph for lifts, ensuring bidirectionality
-    lifts.forEach(lift => {
-      this.graph.addEdge(lift);
-      // For bidirectional lifts, add an edge in the reverse direction
-      //if (isLift(lift)) {
-        //this.graph.addEdge(new Edge(lift.name, lift.end, lift.start, lift.time, lift.distance, lift.level, lift.type));
-      //}
-    });
+    lifts.forEach(lift => this.graph.addEdge(lift));
   }
 
   // Method to get all routes/edges
