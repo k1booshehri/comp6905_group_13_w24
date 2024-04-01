@@ -164,6 +164,7 @@ export class Graph {
       if (isLift(edge)) {
           // If it's a lift, add its time to totalTime
           totalTime += edge.time;
+          totalDistance += edge.distance;
       } else {
           // If it's a slope, calculate time based on distance and add to totalTime
           // and also add its distance to totalDistance
