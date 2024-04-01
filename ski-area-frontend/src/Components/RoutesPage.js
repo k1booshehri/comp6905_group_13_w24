@@ -122,27 +122,37 @@ const RoutesPage = () => {
       return; // Exit the function if validation fails
     }
     setError(''); // Clear any previous errors
-
+  
     const postData = {
       start: startPoint,
       end: endPoint,
       level: level
     };
     console.log("Sending POST request with body:", postData);
-
+  
     try {
       const response = await fetch('http://localhost:3028/find-routes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ start: startPoint, end: endPoint, level: level })
+        body: JSON.stringify(postData)
       });
       const data = await response.json();
-      setRoutes(data.routes);
-      setSelectedPathIndex(null); // Reset selection upon fetching new routes
+  
+      if (data.routes && data.routes.length > 0) {
+        setRoutes(data.routes);
+        setSelectedPathIndex(null); // Reset selection upon fetching new routes
+        setError(''); // Make sure to clear any previous error messages
+      } else {
+        // Set the message from the response as an error or informational message
+        setError(data.message || 'No routes found.');
+        setRoutes([]); // Clear previous routes
+      }
     } catch (error) {
       console.error('Error during POST request:', error);
+      setError('Failed to fetch routes. Please try again later.');
     }
   };
+  
 
   const renderRoutesTable = () => (
     <table style={tableStyle}>
@@ -221,9 +231,13 @@ const RoutesPage = () => {
           ))}
         </select>
         <button onClick={handleRequestRoutes}>Request Routes</button>
-        {error && <div style={{ color: 'red', textAlign: 'center' }}>{error}</div>}
+        {error && <div style={{ color: 'red', textAlign: 'center', marginTop: '20px' }}>{error}</div>}
+        
+        {/* Display the routes table only if routes are available */}
         {routes.length > 0 ? renderRoutesTable() : null}
-        {renderPathDetails()}
+        
+        {selectedPathIndex !== null && renderPathDetails()}
+        
         <div>
           <h2 style={{ textAlign: 'center' }}>Lifts</h2>
           {renderLiftsTable()}
@@ -235,6 +249,7 @@ const RoutesPage = () => {
       </div>
     </div>
   );
+  
 
 };
 
