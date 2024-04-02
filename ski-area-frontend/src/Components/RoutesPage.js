@@ -122,14 +122,14 @@ const RoutesPage = () => {
       return; // Exit the function if validation fails
     }
     setError(''); // Clear any previous errors
-  
+
     const postData = {
       start: startPoint,
       end: endPoint,
       level: level
     };
     console.log("Sending POST request with body:", postData);
-  
+
     try {
       const response = await fetch('http://localhost:3028/find-routes', {
         method: 'POST',
@@ -137,7 +137,7 @@ const RoutesPage = () => {
         body: JSON.stringify(postData)
       });
       const data = await response.json();
-  
+
       if (data.routes && data.routes.length > 0) {
         setRoutes(data.routes);
         setSelectedPathIndex(null); // Reset selection upon fetching new routes
@@ -152,7 +152,7 @@ const RoutesPage = () => {
       setError('Failed to fetch routes. Please try again later.');
     }
   };
-  
+
 
   const renderRoutesTable = () => (
     <table style={tableStyle}>
@@ -163,6 +163,7 @@ const RoutesPage = () => {
           <th>Name</th>
           <th>Total Distance (meters)</th>
           <th>Total Time (minutes)</th>
+          <th>Categories</th> {/* Add a header for the new Categories column */}
         </tr>
       </thead>
       <tbody>
@@ -180,11 +181,13 @@ const RoutesPage = () => {
             <td>{route.path.map(segment => segment.name).join(', ')}</td>
             <td>{route.totalDistance}</td>
             <td>{route.totalTime.toFixed(2)}</td>
+            <td>{route.categories.join(', ')}</td> {/* Display categories */}
           </tr>
         ))}
       </tbody>
     </table>
   );
+
 
   const renderPathDetails = () => {
     if (selectedPathIndex === null) return null;
@@ -232,12 +235,12 @@ const RoutesPage = () => {
         </select>
         <button onClick={handleRequestRoutes}>Request Routes</button>
         {error && <div style={{ color: 'red', textAlign: 'center', marginTop: '20px' }}>{error}</div>}
-        
+
         {/* Display the routes table only if routes are available */}
         {routes.length > 0 ? renderRoutesTable() : null}
-        
+
         {selectedPathIndex !== null && renderPathDetails()}
-        
+
         <div>
           <h2 style={{ textAlign: 'center' }}>Lifts</h2>
           {renderLiftsTable()}
@@ -249,7 +252,7 @@ const RoutesPage = () => {
       </div>
     </div>
   );
-  
+
 
 };
 
