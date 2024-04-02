@@ -5,31 +5,42 @@ export class Graph {
   public adjList: Map<string, Edge[]> = new Map();
 
   public addNode(node: string): void {
-    this.nodes.add(node);
-    this.adjList.set(node, []);
+    try {
+      this.nodes.add(node);
+      this.adjList.set(node, []);
+    } catch (error) {
+      console.error('Failed to add node:', error);
+    }
   }
 
   public addEdge(edge: Edge): void {
-    if (!this.adjList.has(edge.start)) {
-      this.addNode(edge.start);
-    }
-    if (!this.adjList.has(edge.end)) {
-      this.addNode(edge.end);
-    }
+    try {
+      if (!this.adjList.has(edge.start)) {
+        this.addNode(edge.start);
+      }
+      if (!this.adjList.has(edge.end)) {
+        this.addNode(edge.end);
+      }
 
-    this.adjList.get(edge.start).push(edge);
+      this.adjList.get(edge.start)?.push(edge);
 
-    // For lifts, add a reverse edge to make it bidirectional.
-    if (isLift(edge)) {
-      // Add the edge in the opposite direction with the same properties.
-      this.adjList.get(edge.end).push(
-        new Edge(edge.name, edge.end, edge.start, edge.time, edge.distance, edge.level, edge.type)
-      );
+      if (isLift(edge)) {
+        this.adjList.get(edge.end)?.push(
+          new Edge(edge.name, edge.end, edge.start, edge.time, edge.distance, edge.level, edge.type)
+        );
+      }
+    } catch (error) {
+      console.error('Failed to add edge:', error);
     }
   }
 
   public getEdges(node: string): Edge[] {
-    return this.adjList.get(node) || [];
+    try {
+      return this.adjList.get(node) || [];
+    } catch (error) {
+      console.error('Failed to get edges for node:', error);
+      return [];
+    }
   }
 
   public getAllEdges(): Edge[] {
@@ -92,61 +103,66 @@ export class Graph {
 
 
   public findAllRoutes(start: string, end: string, level: Level): { message: string, routes: any[] } {
-    let routes = [];
-    const visited = new Set<string>();
-    const uniquePaths = new Set<string>(); // To store unique paths
+    try {
+      let routes = [];
+      const visited = new Set<string>();
+      const uniquePaths = new Set<string>(); // To store unique paths
 
-    const dfs = (node: string, path: Edge[], liftCount = 0) => {
-      if (node === end) {
-        const { totalTime, totalDistance, categories, finalDistance } = this.calculatePathDetails(path, level);
-        const pathKey = path.map(edge => edge.name).join('-'); // Generating a unique key for the path
-        if (!uniquePaths.has(pathKey)) { // Check if path is unique
-          routes.push({ path: [...path], totalTime, totalDistance, categories, finalDistance, liftCount });
-          uniquePaths.add(pathKey); // Add path key to set
+      const dfs = (node: string, path: Edge[], liftCount = 0) => {
+        if (node === end) {
+          const { totalTime, totalDistance, categories, finalDistance } = this.calculatePathDetails(path, level);
+          const pathKey = path.map(edge => edge.name).join('-'); // Generating a unique key for the path
+          if (!uniquePaths.has(pathKey)) { // Check if path is unique
+            routes.push({ path: [...path], totalTime, totalDistance, categories, finalDistance, liftCount });
+            uniquePaths.add(pathKey); // Add path key to set
+          }
+          return;
         }
-        return;
+
+        visited.add(node);
+        const edges = this.adjList.get(node) || [];
+
+        for (const edge of edges) {
+          if (!visited.has(edge.end) && (edge.level === level || isLift(edge))) {
+            dfs(edge.end, [...path, edge], liftCount + (isLift(edge) ? 1 : 0));
+          }
+        }
+
+        visited.delete(node);
+      };
+
+      dfs(start, []);
+
+      if (routes.length === 0) {
+        return { message: "No path found with given conditions, Please select another level and check. Or Change starting or Ending Point.", routes: [] };
       }
 
-      visited.add(node);
-      const edges = this.adjList.get(node) || [];
+      this.categorizeAndCompareRoutes(routes);
 
-      for (const edge of edges) {
-        if (!visited.has(edge.end) && (edge.level === level || isLift(edge))) {
-          dfs(edge.end, [...path, edge], liftCount + (isLift(edge) ? 1 : 0));
-        }
-      }
-
-      visited.delete(node);
-    };
-
-    dfs(start, []);
-
-    if (routes.length === 0) {
-      return { message: "No path found with given conditions, Please select another level and check. Or Change starting or Ending Point.", routes: [] };
+      return {
+        message: "Routes Overview",
+        routes: routes.map(route => ({
+          path: route.path.map(edge => ({
+            start: edge.start,
+            end: edge.end,
+            name: edge.name,
+            difficulty: edge.level,
+            time: edge.time,
+            distance: edge.distance,
+            type: edge.type,
+            isLift: isLift(edge)
+          })),
+          totalTime: route.totalTime,
+          totalDistance: route.totalDistance,
+          finalDistance: route.finalDistance,
+          categories: route.categories,
+          liftCount: route.liftCount
+        }))
+      };
+    } catch (error) {
+      console.error('Failed to find all routes:', error);
+      return { message: "Error finding routes.", routes: [] };
     }
-
-    this.categorizeAndCompareRoutes(routes);
-
-    return {
-      message: "Routes Overview",
-      routes: routes.map(route => ({
-        path: route.path.map(edge => ({
-          start: edge.start,
-          end: edge.end,
-          name: edge.name,
-          difficulty: edge.level,
-          time: edge.time,
-          distance: edge.distance,
-          type: edge.type,
-          isLift: isLift(edge)
-        })),
-        totalTime: route.totalTime,
-        totalDistance: route.totalDistance,
-        finalDistance: route.finalDistance,
-        categories: route.categories,
-        liftCount: route.liftCount 
-      }))
-    };
   }
 
 
@@ -158,7 +174,7 @@ export class Graph {
 
     for (const edge of path) {
       if (isLift(edge)) {
-        liftCount += 1; 
+        liftCount += 1;
         totalTime += edge.time;
         totalDistance += edge.distance;
       } else {
