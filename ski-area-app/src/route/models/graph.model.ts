@@ -157,11 +157,13 @@ export class Graph {
     let difficultyFactor = 0;
 
     for (const edge of path) {
-      totalTime += edge.time;
-      totalDistance += edge.distance;
       if (isLift(edge)) {
         liftCount += 1; 
+        totalTime += edge.time;
+        totalDistance += edge.distance;
       } else {
+        totalTime += edge.distance / 840; // Slope time calculation: distance / 840 to convert to minutes
+        totalDistance += edge.distance;
         difficultyFactor += edge.level === 'Easy' ? 0.5 : edge.level === 'Intermediate' ? 1 : 1.5;
       }
     }
