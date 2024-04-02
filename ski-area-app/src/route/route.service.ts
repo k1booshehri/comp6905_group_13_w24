@@ -13,7 +13,6 @@ export class RouteService {
       this.initializeSampleGraph();
     } catch (error) {
       console.error('Failed to initialize graph', error);
-      // Handle initialization error or rethrow to prevent further execution
       throw error;
     }
   }
@@ -30,13 +29,12 @@ export class RouteService {
       }
       const results = this.graph.findAllRoutes(start, end, level as Level);
       if (results.routes.length === 0) {
-        return { message: "No path found with given conditions, Please select another level and check. Or Change starting or Ending Point.", routes: [] };
+        return { message: "No path found with given conditions, Please select another level and check. Or Change starting or Ending Point.",  unique_categories: [], routes: [] };
       }
       return results;
     } catch (error) {
       console.error('Error finding routes', error);
-      // Depending on your application's needs, you might want to return an error message, an empty result, or rethrow the error
-      return { message: "An error occurred while finding routes. Please try again later.", routes: [] };
+      return { message: "An error occurred while finding routes. Please try again later.",  unique_categories: [],routes: [] };
     }
   }
 
@@ -126,12 +124,11 @@ export class RouteService {
 
   // Method to get all routes/edges
   public getAllRoutes(): Edge[] {
-    return this.graph.getAllEdges(); // Assuming Graph class has getAllEdges method
+    return this.graph.getAllEdges(); 
   }
 
   //for getting the all routes
   public getAllRoutesOverview(): { nodes: string[], levels: Level[], edges: Edge[] } {
-    // This calls the new method from the Graph class
     return this.graph.getAllEdgesWithOverview();
   }
 

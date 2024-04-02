@@ -102,7 +102,7 @@ export class Graph {
   }
 
 
-  public findAllRoutes(start: string, end: string, level: Level): { message: string, routes: any[] } {
+  public findAllRoutes(start: string, end: string, level: Level): { message: string, unique_categories: string[], routes: any[] } {
     try {
       let routes = [];
       const visited = new Set<string>();
@@ -134,13 +134,22 @@ export class Graph {
       dfs(start, []);
 
       if (routes.length === 0) {
-        return { message: "No path found with given conditions, Please select another level and check. Or Change starting or Ending Point.", routes: [] };
+        return { message: "No path found with given conditions, Please select another level and check. Or Change starting or Ending Point.", unique_categories: [], routes: [] };
       }
 
       this.categorizeAndCompareRoutes(routes);
 
+      // Collect unique categories
+      const uniqueCategories = new Set<string>();
+      routes.forEach(route => {
+        route.categories.forEach(category => {
+          uniqueCategories.add(category);
+        });
+      });
+
       return {
         message: "Routes Overview",
+        unique_categories: Array.from(uniqueCategories),
         routes: routes.map(route => ({
           path: route.path.map(edge => ({
             start: edge.start,
@@ -161,7 +170,7 @@ export class Graph {
       };
     } catch (error) {
       console.error('Failed to find all routes:', error);
-      return { message: "Error finding routes.", routes: [] };
+      return { message: "Error finding routes.", unique_categories: [], routes: [] };
     }
   }
 
