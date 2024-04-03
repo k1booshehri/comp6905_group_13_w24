@@ -17,27 +17,35 @@ export class RouteService {
     }
   }
 
-  private isLevel(value: string): value is Level {
-    return ['Easy', 'Intermediate', 'Difficult'].includes(value);
-  }
+  // private isLevel(value: string): value is Level {
+  //   return ['Easy', 'Intermediate', 'Difficult'].includes(value);
+  // }
 
-
-  public findRoutes(start: string, end: string, level: string) {
+  public findRoutes(start: string, end: string, level: string[]) {
     try {
-      if (!this.isLevel(level)) {
-        throw new Error('Invalid level');
-      }
-      const results = this.graph.findAllRoutes(start, end, level as Level);
+      // if (!this.isLevel(level[])) {
+      //   throw new Error('Invalid level');
+      // }
+      const results = this.graph.findAllRoutes(start, end, level as Level[]);
       if (results.routes.length === 0) {
-        return { message: "No path found with given conditions, Please select another level and check. Or Change starting or Ending Point.",  unique_categories: [], routes: [] };
+        return {
+          message:
+            'No path found with given conditions, Please select another level and check. Or Change starting or Ending Point.',
+          unique_categories: [],
+          routes: [],
+        };
       }
       return results;
     } catch (error) {
       console.error('Error finding routes', error);
-      return { message: "An error occurred while finding routes. Please try again later.",  unique_categories: [],routes: [] };
+      return {
+        message:
+          'An error occurred while finding routes. Please try again later.',
+        unique_categories: [],
+        routes: [],
+      };
     }
   }
-
 
   private initializeSampleGraph(): void {
     // Define slopes
@@ -49,11 +57,25 @@ export class RouteService {
       new Edge('3 Pauliabfahrt', 'T', 'R', 0, 1300, 'Intermediate'),
       new Edge('4 MAPAKI Familienabfahrt', 'T', 'R', 0, 1100, 'Intermediate'),
       new Edge('5 Engländerabfahrt', 'Y', 'P', 0, 300, 'Intermediate'),
-      new Edge('6 Übungswiesenabfahrt links', 'P1', 'Y', 0, 400, 'Intermediate'),
+      new Edge(
+        '6 Übungswiesenabfahrt links',
+        'P1',
+        'Y',
+        0,
+        400,
+        'Intermediate',
+      ),
       new Edge('7 Übungswiesenabfahrt rechts', 'P2', 'Y', 0, 500, 'Easy'),
       new Edge('8 Alibi - für Panoramabahn', 'D1', 'B2', 0, 400, 'Easy'),
       new Edge('9 Abfahrt Hüttenexpress', 'A1', 'A2', 0, 400, 'Intermediate'),
-      new Edge('10 Kornock Steilhang - Skiroute', 'Ski Route', 'Ski Route', 0, 500, 'Intermediate'),
+      new Edge(
+        '10 Kornock Steilhang - Skiroute',
+        'Ski Route',
+        'Ski Route',
+        0,
+        500,
+        'Intermediate',
+      ),
       new Edge('12 Panoramaabfahrt', 'C', 'A1', 0, 950, 'Intermediate'),
       new Edge('13 Ländereckabfahrt', 'P1', 'D1', 0, 400, 'Intermediate'),
       new Edge('14 Schafalmabfahrt', 'X', 'U20', 0, 1350, 'Intermediate'),
@@ -74,9 +96,16 @@ export class RouteService {
       new Edge('31 Skiweg zur Turrachbahn', 'A', 'C', 0, 2000, 'Easy'),
       new Edge('32 Skiweg zur Sonnenbahn', 'G', 'C', 0, 1250, 'Easy'),
       new Edge('33 Ski - Rodelweg', 'F', 'G', 0, 880, 'Easy'),
-      new Edge('34 Adrenalin - Skiroute', 'Ski Route', 'Ski Route', 0, 400, 'Intermediate'),
+      new Edge(
+        '34 Adrenalin - Skiroute',
+        'Ski Route',
+        'Ski Route',
+        0,
+        400,
+        'Intermediate',
+      ),
       new Edge('36 Alibi für Seitensprung', 'J', 'F', 0, 650, 'Easy'),
-      new Edge('37 – Alibi für FIS-Abfahrt', 'H', 'F', 0, 400, 'Easy')
+      new Edge('37 – Alibi für FIS-Abfahrt', 'H', 'F', 0, 400, 'Easy'),
     ];
 
     // Define lifts
@@ -102,8 +131,24 @@ export class RouteService {
       new Edge('Zirbenwaldbahn', 'M', 'N', 7, 2100, 'Easy', '6-chair lift'),
       new Edge('Sonnenbahn', 'F', 'G', 7, 2100, 'Easy', '2-chair lift'),
       new Edge('Sonnenbahn', 'G', 'F', 7, 2100, 'Easy', '2-chair lift'),
-      new Edge('Panoramabahn', 'C', 'A1', 10, 3834, 'Easy', 'Chair lift/cable car'),
-      new Edge('Panoramabahn', 'A1', 'C', 10, 3834, 'Easy', 'Chair lift/cable car'),
+      new Edge(
+        'Panoramabahn',
+        'C',
+        'A1',
+        10,
+        3834,
+        'Easy',
+        'Chair lift/cable car',
+      ),
+      new Edge(
+        'Panoramabahn',
+        'A1',
+        'C',
+        10,
+        3834,
+        'Easy',
+        'Chair lift/cable car',
+      ),
       new Edge('Schafalmbahn', 'X', 'U', 7, 2100, 'Easy', '6-chair lift'),
       new Edge('Schafalmbahn', 'U', 'X', 7, 2100, 'Easy', '6-chair lift'),
       new Edge('Weitentallift', 'A', 'B', 5, 916, 'Easy', 'T-bar'),
@@ -113,23 +158,25 @@ export class RouteService {
       new Edge('Wildkopfbahn', 'Q', 'P', 7, 2100, 'Easy', '6-chair lift'),
       new Edge('Wildkopfbahn', 'P', 'Q', 7, 2100, 'Easy', '6-chair lift'),
       new Edge('Nocky-Blitz', 'C', 'E2', 10, 2833, 'Easy', 'Rack railway'),
-      new Edge('Nocky-Blitz', 'E2', 'C', 10, 2833, 'Easy', 'Rack railway')
-
+      new Edge('Nocky-Blitz', 'E2', 'C', 10, 2833, 'Easy', 'Rack railway'),
     ];
 
     // Add edges & lifts to the graph for slopes
-    slopes.forEach(slope => this.graph.addEdge(slope));
-    lifts.forEach(lift => this.graph.addEdge(lift));
+    slopes.forEach((slope) => this.graph.addEdge(slope));
+    lifts.forEach((lift) => this.graph.addEdge(lift));
   }
 
   // Method to get all routes/edges
   public getAllRoutes(): Edge[] {
-    return this.graph.getAllEdges(); 
+    return this.graph.getAllEdges();
   }
 
   //for getting the all routes
-  public getAllRoutesOverview(): { nodes: string[], levels: Level[], edges: Edge[] } {
+  public getAllRoutesOverview(): {
+    nodes: string[];
+    levels: Level[];
+    edges: Edge[];
+  } {
     return this.graph.getAllEdgesWithOverview();
   }
-
 }

@@ -1,20 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-import allRoutes from './routes.png';
+import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
+import allRoutes from "./routes.png";
 
 const RoutesPage = () => {
   const location = useLocation();
   const [lifts, setLifts] = useState([]);
   const [slopes, setSlopes] = useState([]);
-  const [startPoint, setStartPoint] = useState('');
-  const [endPoint, setEndPoint] = useState('');
-  const [level, setLevel] = useState('');
+  const [startPoint, setStartPoint] = useState("");
+  const [endPoint, setEndPoint] = useState("");
+  const [level, setLevel] = useState("");
   const [nodes, setNodes] = useState([]);
   const [levels, setLevels] = useState([]);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [routes, setRoutes] = useState([]); // State to hold fetched routes
   const [selectedPathIndex, setSelectedPathIndex] = useState(null); // Index of the selected path
-
 
   useEffect(() => {
     const { routes, nodes, levels } = location.state || {};
@@ -30,36 +29,40 @@ const RoutesPage = () => {
   }, [location.state]);
 
   const processRoutes = (routesData) => {
-    const liftsData = routesData.filter(route => route.type).map(route => ({
-      name: route.name,
-      type: route.type,
-      start: route.start,
-      end: route.end,
-      time: route.time
-    }));
+    const liftsData = routesData
+      .filter((route) => route.type)
+      .map((route) => ({
+        name: route.name,
+        type: route.type,
+        start: route.start,
+        end: route.end,
+        time: route.time,
+      }));
 
-    const slopesData = routesData.filter(route => !route.type).map(route => ({
-      name: route.name,
-      level: route.level,
-      start: route.start,
-      end: route.end,
-      distance: route.distance
-    }));
+    const slopesData = routesData
+      .filter((route) => !route.type)
+      .map((route) => ({
+        name: route.name,
+        level: route.level,
+        start: route.start,
+        end: route.end,
+        distance: route.distance,
+      }));
 
     setLifts(liftsData);
     setSlopes(slopesData);
   };
 
   const tableStyle = {
-    width: '80%',
-    margin: '20px auto',
-    borderCollapse: 'collapse',
+    width: "80%",
+    margin: "20px auto",
+    borderCollapse: "collapse",
   };
 
   const thTdStyle = {
-    border: '1px solid #ddd',
-    padding: '8px',
-    textAlign: 'left',
+    border: "1px solid #ddd",
+    padding: "8px",
+    textAlign: "left",
   };
 
   const renderLiftsTable = () => (
@@ -115,44 +118,43 @@ const RoutesPage = () => {
   const handleRequestRoutes = async () => {
     if (!startPoint || !endPoint || !level) {
       let errorMessages = [];
-      if (!startPoint) errorMessages.push('Start Point');
-      if (!endPoint) errorMessages.push('End Point');
-      if (!level) errorMessages.push('Level');
-      setError(`Please select: ${errorMessages.join(', ')}`);
+      if (!startPoint) errorMessages.push("Start Point");
+      if (!endPoint) errorMessages.push("End Point");
+      if (!level) errorMessages.push("Level");
+      setError(`Please select: ${errorMessages.join(", ")}`);
       return; // Exit the function if validation fails
     }
-    setError(''); // Clear any previous errors
+    setError(""); // Clear any previous errors
 
     const postData = {
       start: startPoint,
       end: endPoint,
-      level: level
+      levels: level,
     };
     console.log("Sending POST request with body:", postData);
 
     try {
-      const response = await fetch('http://localhost:3028/find-routes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(postData)
+      const response = await fetch("http://localhost:3028/find-routes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(postData),
       });
       const data = await response.json();
 
       if (data.routes && data.routes.length > 0) {
         setRoutes(data.routes);
         setSelectedPathIndex(null); // Reset selection upon fetching new routes
-        setError(''); // Make sure to clear any previous error messages
+        setError(""); // Make sure to clear any previous error messages
       } else {
         // Set the message from the response as an error or informational message
-        setError(data.message || 'No routes found.');
+        setError(data.message || "No routes found.");
         setRoutes([]); // Clear previous routes
       }
     } catch (error) {
-      console.error('Error during POST request:', error);
-      setError('Failed to fetch routes. Please try again later.');
+      console.error("Error during POST request:", error);
+      setError("Failed to fetch routes. Please try again later.");
     }
   };
-
 
   const renderRoutesTable = () => (
     <table style={tableStyle}>
@@ -177,17 +179,20 @@ const RoutesPage = () => {
                 onChange={() => setSelectedPathIndex(index)}
               />
             </td>
-            <td>{route.path.map(segment => `${segment.start}-${segment.end}`).join(', ')}</td>
-            <td>{route.path.map(segment => segment.name).join(', ')}</td>
+            <td>
+              {route.path
+                .map((segment) => `${segment.start}-${segment.end}`)
+                .join(", ")}
+            </td>
+            <td>{route.path.map((segment) => segment.name).join(", ")}</td>
             <td>{route.totalDistance}</td>
             <td>{route.totalTime.toFixed(2)}</td>
-            <td>{route.categories.join(', ')}</td> {/* Display categories */}
+            <td>{route.categories.join(", ")}</td> {/* Display categories */}
           </tr>
         ))}
       </tbody>
     </table>
   );
-
 
   const renderPathDetails = () => {
     if (selectedPathIndex === null) return null;
@@ -197,7 +202,9 @@ const RoutesPage = () => {
       <div>
         {selectedPath.path.map((segment, index) => (
           <p key={index}>
-            Start from point {segment.start} to go to point {segment.end} via {segment.isLift ? 'lift' : 'slope'}: {segment.name} {segment.isLift && segment.type ? `(${segment.type})` : ''}
+            Start from point {segment.start} to go to point {segment.end} via{" "}
+            {segment.isLift ? "lift" : "slope"}: {segment.name}{" "}
+            {segment.isLift && segment.type ? `(${segment.type})` : ""}
           </p>
         ))}
       </div>
@@ -206,10 +213,13 @@ const RoutesPage = () => {
 
   return (
     <div>
-      <h1 style={{ textAlign: 'center' }}>All Available Routes</h1>
-      <img src={allRoutes} alt="All Routes" style={{ height: '600px' }} />
-      <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-        <select value={startPoint} onChange={(e) => setStartPoint(e.target.value)}>
+      <h1 style={{ textAlign: "center" }}>All Available Routes</h1>
+      <img src={allRoutes} alt="All Routes" style={{ height: "600px" }} />
+      <div style={{ textAlign: "center", marginBottom: "20px" }}>
+        <select
+          value={startPoint}
+          onChange={(e) => setStartPoint(e.target.value)}
+        >
           <option value="">Select Start Point</option>
           {nodes.map((node, index) => (
             <option key={index} value={node}>
@@ -225,7 +235,15 @@ const RoutesPage = () => {
             </option>
           ))}
         </select>
-        <select value={level} onChange={(e) => setLevel(e.target.value)}>
+        <select
+          value={level}
+          onChange={(e) =>
+            setLevel(
+              Array.from(e.target.selectedOptions, (option) => option.value)
+            )
+          }
+          multiple
+        >
           <option value="">Select Level</option>
           {levels.map((level, index) => (
             <option key={index} value={level}>
@@ -234,7 +252,11 @@ const RoutesPage = () => {
           ))}
         </select>
         <button onClick={handleRequestRoutes}>Request Routes</button>
-        {error && <div style={{ color: 'red', textAlign: 'center', marginTop: '20px' }}>{error}</div>}
+        {error && (
+          <div style={{ color: "red", textAlign: "center", marginTop: "20px" }}>
+            {error}
+          </div>
+        )}
 
         {/* Display the routes table only if routes are available */}
         {routes.length > 0 ? renderRoutesTable() : null}
@@ -242,18 +264,16 @@ const RoutesPage = () => {
         {selectedPathIndex !== null && renderPathDetails()}
 
         <div>
-          <h2 style={{ textAlign: 'center' }}>Lifts</h2>
+          <h2 style={{ textAlign: "center" }}>Lifts</h2>
           {renderLiftsTable()}
         </div>
         <div>
-          <h2 style={{ textAlign: 'center' }}>Slopes</h2>
+          <h2 style={{ textAlign: "center" }}>Slopes</h2>
           {renderSlopesTable()}
         </div>
       </div>
     </div>
   );
-
-
 };
 
 export default RoutesPage;

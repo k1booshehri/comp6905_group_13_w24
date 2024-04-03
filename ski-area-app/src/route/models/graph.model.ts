@@ -25,9 +25,19 @@ export class Graph {
       this.adjList.get(edge.start)?.push(edge);
 
       if (isLift(edge)) {
-        this.adjList.get(edge.end)?.push(
-          new Edge(edge.name, edge.end, edge.start, edge.time, edge.distance, edge.level, edge.type)
-        );
+        this.adjList
+          .get(edge.end)
+          ?.push(
+            new Edge(
+              edge.name,
+              edge.end,
+              edge.start,
+              edge.time,
+              edge.distance,
+              edge.level,
+              edge.type,
+            ),
+          );
       }
     } catch (error) {
       console.error('Failed to add edge:', error);
@@ -45,20 +55,25 @@ export class Graph {
 
   public getAllEdges(): Edge[] {
     const allEdges: Edge[] = [];
-    this.adjList.forEach(edges => {
+    this.adjList.forEach((edges) => {
       allEdges.push(...edges);
     });
     return allEdges;
   }
 
-  public getAllEdgesWithOverview(): { nodes: string[], levels: Level[], types: LiftType[], edges: Edge[] } {
+  public getAllEdgesWithOverview(): {
+    nodes: string[];
+    levels: Level[];
+    types: LiftType[];
+    edges: Edge[];
+  } {
     const levelsSet: Set<Level> = new Set();
     const typesSet: Set<LiftType> = new Set();
     const uniqueLifts = new Set<string>(); // Use to track which lifts have been added
 
     // Adjusted scope for these arrays
     const nodesArray = Array.from(this.nodes);
-    const allEdges = this.getAllEdges().filter(edge => {
+    const allEdges = this.getAllEdges().filter((edge) => {
       // For lifts, check and include only one direction
       if (isLift(edge)) {
         if (uniqueLifts.has(edge.name)) {
@@ -76,16 +91,25 @@ export class Graph {
     const levelsArray = Array.from(levelsSet);
     const typesArray = Array.from(typesSet);
 
-    return { nodes: nodesArray, levels: levelsArray, types: typesArray, edges: allEdges };
+    return {
+      nodes: nodesArray,
+      levels: levelsArray,
+      types: typesArray,
+      edges: allEdges,
+    };
   }
 
-  public getGraphOverview(): { nodes: string[], levels: Level[], edges: Edge[] } {
+  public getGraphOverview(): {
+    nodes: string[];
+    levels: Level[];
+    edges: Edge[];
+  } {
     // Initialize a Set to store all unique levels
     const levelsSet: Set<Level> = new Set();
 
     // Iterate over all edges to extract unique levels
-    this.adjList.forEach(edges => {
-      edges.forEach(edge => {
+    this.adjList.forEach((edges) => {
+      edges.forEach((edge) => {
         levelsSet.add(edge.level);
       });
     });
@@ -101,8 +125,11 @@ export class Graph {
     return { nodes: nodesArray, levels: levelsArray, edges: allEdges };
   }
 
-
-  public findAllRoutes(start: string, end: string, level: Level): { message: string, unique_categories: string[], routes: any[] } {
+  public findAllRoutes(
+    start: string,
+    end: string,
+    levels: Level[],
+  ): { message: string; unique_categories: string[]; routes: any[] } {
     try {
       let routes = [];
       const visited = new Set<string>();
@@ -110,10 +137,19 @@ export class Graph {
 
       const dfs = (node: string, path: Edge[], liftCount = 0) => {
         if (node === end) {
-          const { totalTime, totalDistance, categories, finalDistance } = this.calculatePathDetails(path, level);
-          const pathKey = path.map(edge => edge.name).join('-'); // Generating a unique key for the path
-          if (!uniquePaths.has(pathKey)) { // Check if path is unique
-            routes.push({ path: [...path], totalTime, totalDistance, categories, finalDistance, liftCount });
+          const { totalTime, totalDistance, categories, finalDistance } =
+            this.calculatePathDetails(path);
+          const pathKey = path.map((edge) => edge.name).join('-'); // Generating a unique key for the path
+          if (!uniquePaths.has(pathKey)) {
+            // Check if path is unique
+            routes.push({
+              path: [...path],
+              totalTime,
+              totalDistance,
+              categories,
+              finalDistance,
+              liftCount,
+            });
             uniquePaths.add(pathKey); // Add path key to set
           }
           return;
@@ -123,7 +159,10 @@ export class Graph {
         const edges = this.adjList.get(node) || [];
 
         for (const edge of edges) {
-          if (!visited.has(edge.end) && (edge.level === level || isLift(edge))) {
+          if (
+            !visited.has(edge.end) &&
+            (levels.includes(edge.level) || isLift(edge))
+          ) {
             dfs(edge.end, [...path, edge], liftCount + (isLift(edge) ? 1 : 0));
           }
         }
@@ -134,24 +173,29 @@ export class Graph {
       dfs(start, []);
 
       if (routes.length === 0) {
-        return { message: "No path found with given conditions, Please select another level and check. Or Change starting or Ending Point.", unique_categories: [], routes: [] };
+        return {
+          message:
+            'No path found with given conditions, Please select another level and check. Or Change starting or Ending Point.',
+          unique_categories: [],
+          routes: [],
+        };
       }
 
       this.categorizeAndCompareRoutes(routes);
 
       // Collect unique categories
       const uniqueCategories = new Set<string>();
-      routes.forEach(route => {
-        route.categories.forEach(category => {
+      routes.forEach((route) => {
+        route.categories.forEach((category) => {
           uniqueCategories.add(category);
         });
       });
 
       return {
-        message: "Routes Overview",
+        message: 'Routes Overview',
         unique_categories: Array.from(uniqueCategories),
-        routes: routes.map(route => ({
-          path: route.path.map(edge => ({
+        routes: routes.map((route) => ({
+          path: route.path.map((edge) => ({
             start: edge.start,
             end: edge.end,
             name: edge.name,
@@ -159,27 +203,38 @@ export class Graph {
             time: edge.time,
             distance: edge.distance,
             type: edge.type,
-            isLift: isLift(edge)
+            isLift: isLift(edge),
           })),
           totalTime: route.totalTime,
           totalDistance: route.totalDistance,
           finalDistance: route.finalDistance,
           categories: route.categories,
-          liftCount: route.liftCount
-        }))
+          liftCount: route.liftCount,
+        })),
       };
     } catch (error) {
       console.error('Failed to find all routes:', error);
-      return { message: "Error finding routes.", unique_categories: [], routes: [] };
+      return {
+        message: 'Error finding routes.',
+        unique_categories: [],
+        routes: [],
+      };
     }
   }
 
-
-  private calculatePathDetails(path: Edge[], requestedLevel: Level): { totalTime: number, totalDistance: number, categories: string[], finalDistance: number, liftCount: number } {
+  private calculatePathDetails(path: Edge[]): {
+    totalTime: number;
+    totalDistance: number;
+    categories: string[];
+    finalDistance: number;
+    liftCount: number;
+    difficultyDistance: number;
+  } {
     let totalTime = 0;
     let totalDistance = 0;
     let liftCount = 0;
     let difficultyFactor = 0;
+    let difficultyDistance = 0;
 
     for (const edge of path) {
       if (isLift(edge)) {
@@ -188,39 +243,54 @@ export class Graph {
         totalDistance += edge.distance;
       } else {
         totalTime += edge.distance / 840; // Slope time calculation: distance / 840 to convert to minutes
+        difficultyFactor =
+          edge.level === 'Easy' ? 0.5 : edge.level === 'Intermediate' ? 1 : 1.5;
         totalDistance += edge.distance;
-        difficultyFactor += edge.level === 'Easy' ? 0.5 : edge.level === 'Intermediate' ? 1 : 1.5;
+        difficultyDistance += edge.distance * difficultyFactor;
+        //difficultyFactor += edge.level === 'Easy' ? 0.5 : edge.level === 'Intermediate' ? 1 : 1.5;
       }
     }
 
     const finalDistance = totalDistance * difficultyFactor;
 
-    return { totalTime, totalDistance, categories: [], finalDistance, liftCount };
+    return {
+      totalTime,
+      totalDistance,
+      categories: [],
+      finalDistance,
+      liftCount,
+      difficultyDistance,
+    };
   }
 
   private categorizeAndCompareRoutes(routes: any[]) {
     // Initialize variables to find the extremes
-    let minTime = Infinity, maxDistance = 0, minLiftCount = Infinity;
-    let minFinalDistance = Infinity, maxFinalDistance = 0;
+    let minTime = Infinity,
+      maxDistance = 0,
+      minLiftCount = Infinity;
+    let minFinalDistance = Infinity,
+      maxFinalDistance = 0;
 
     // First pass to find the extreme values
     for (const route of routes) {
       minTime = Math.min(minTime, route.totalTime);
       maxDistance = Math.max(maxDistance, route.totalDistance);
       minLiftCount = Math.min(minLiftCount, route.liftCount);
-      minFinalDistance = Math.min(minFinalDistance, route.finalDistance);
-      maxFinalDistance = Math.max(maxFinalDistance, route.finalDistance);
+      minFinalDistance = Math.min(minFinalDistance, route.difficultyDistance);
+      maxFinalDistance = Math.max(maxFinalDistance, route.difficultyDistance);
     }
 
     // Second pass to assign categories based on the extremes
-    routes.forEach(route => {
+    routes.forEach((route) => {
       route.categories = [];
-      if (route.finalDistance === minFinalDistance) route.categories.push('Easiest');
-      if (route.finalDistance === maxFinalDistance) route.categories.push('Hardest');
+      if (route.finalDistance === minFinalDistance)
+        route.categories.push('Easiest');
+      if (route.finalDistance === maxFinalDistance)
+        route.categories.push('Hardest');
       if (route.totalDistance === maxDistance) route.categories.push('Longest');
       if (route.totalTime === minTime) route.categories.push('Fastest');
-      if (route.liftCount === minLiftCount) route.categories.push('Minimum Lift Usage');
+      if (route.liftCount === minLiftCount)
+        route.categories.push('Minimum Lift Usage');
     });
   }
-
 }
