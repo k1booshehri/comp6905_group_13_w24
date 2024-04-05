@@ -370,18 +370,20 @@ const RoutesPage = () => {
     <div>
       <div>
         <div style={{ color: "#991b1b" }}>
-          1.Enter Starting and Ending points using dropdown menu.
+          1.Enter Starting and Ending points using dropdown menu below the
+          graph.
         </div>
         <div style={{ color: "#991b1b" }}>
           2.Select Difficulty from menu.To select multiple hold ctrl or cmnd.
         </div>
         <div style={{ color: "#991b1b" }}>3.Click on request routes.</div>
         <div style={{ color: "#991b1b" }}>
-          4.You will see all possible routes.Then you can choose criteria.
+          4.You will see all possible routes.Then you can choose criteria from
+          the new dropdown menu that appears.
         </div>
         <div style={{ color: "#991b1b" }}>
-          5.Select your favourite path.You will see details written and on map
-          highlighted.
+          5.Select your favourite path from the radio buttons beside routes.You
+          will see details written below routes and highlighted on map.
         </div>
         <div style={{ color: "#991b1b" }}>
           6.Click on reset to calculate new one.
