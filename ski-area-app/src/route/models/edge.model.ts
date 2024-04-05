@@ -1,5 +1,5 @@
 export type Level = 'Easy' | 'Intermediate' | 'Difficult';
-export type LiftType = 'T-bar' | '6-chair lift' | '2-chair lift' | 'Chair lift/cable car' | 'Rack railway';
+export type LiftType = any;
 
 export class Edge {
   constructor(

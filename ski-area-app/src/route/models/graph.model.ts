@@ -228,13 +228,13 @@ export class Graph {
     categories: string[];
     finalDistance: number;
     liftCount: number;
-    difficultyDistance: number;
   } {
     let totalTime = 0;
     let totalDistance = 0;
     let liftCount = 0;
     let difficultyFactor = 0;
     let difficultyDistance = 0;
+    let finalDistance = 0;
 
     for (const edge of path) {
       if (isLift(edge)) {
@@ -246,12 +246,9 @@ export class Graph {
         difficultyFactor =
           edge.level === 'Easy' ? 0.5 : edge.level === 'Intermediate' ? 1 : 1.5;
         totalDistance += edge.distance;
-        difficultyDistance += edge.distance * difficultyFactor;
-        //difficultyFactor += edge.level === 'Easy' ? 0.5 : edge.level === 'Intermediate' ? 1 : 1.5;
+        finalDistance += edge.distance * difficultyFactor;
       }
     }
-
-    const finalDistance = totalDistance * difficultyFactor;
 
     return {
       totalTime,
@@ -259,14 +256,13 @@ export class Graph {
       categories: [],
       finalDistance,
       liftCount,
-      difficultyDistance,
     };
   }
 
   private categorizeAndCompareRoutes(routes: any[]) {
     // Initialize variables to find the extremes
     let minTime = Infinity,
-      maxDistance = 0,
+      minDistance = Infinity,
       minLiftCount = Infinity;
     let minFinalDistance = Infinity,
       maxFinalDistance = 0;
@@ -274,10 +270,10 @@ export class Graph {
     // First pass to find the extreme values
     for (const route of routes) {
       minTime = Math.min(minTime, route.totalTime);
-      maxDistance = Math.max(maxDistance, route.totalDistance);
+      minDistance = Math.min(minDistance, route.totalDistance);
       minLiftCount = Math.min(minLiftCount, route.liftCount);
-      minFinalDistance = Math.min(minFinalDistance, route.difficultyDistance);
-      maxFinalDistance = Math.max(maxFinalDistance, route.difficultyDistance);
+      minFinalDistance = Math.min(minFinalDistance, route.finalDistance);
+      maxFinalDistance = Math.max(maxFinalDistance, route.finalDistance);
     }
 
     // Second pass to assign categories based on the extremes
@@ -287,7 +283,8 @@ export class Graph {
         route.categories.push('Easiest');
       if (route.finalDistance === maxFinalDistance)
         route.categories.push('Hardest');
-      if (route.totalDistance === maxDistance) route.categories.push('Longest');
+      if (route.totalDistance === minDistance)
+        route.categories.push('Shortest');
       if (route.totalTime === minTime) route.categories.push('Fastest');
       if (route.liftCount === minLiftCount)
         route.categories.push('Minimum Lift Usage');
